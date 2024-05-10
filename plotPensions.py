@@ -8,12 +8,13 @@ Email: akshay.shanker@me.com
 Acknowledgements:
 -----------------
 
-This code implementing the pensions model (examples/G2EGM) is a modification 
-of the original G2EGM package written by Druedhal and Jorgensen. The code was 
-modified to:
+The pensions module (G2EGM) is a modification 
+of the original G2EGM mod written by Druedhal and Jorgensen. The code original 
+was modified to:
+
  i) invert the Euler equation according to the necessary conditions 
     in Dobrescu and Shanker (2024) and 
- ii) to implement RFC in the G2EGM model.
+ ii) implement roof-top cut algorithm. 
 """
 
 import numpy as np
