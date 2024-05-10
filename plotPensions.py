@@ -31,11 +31,11 @@ if __name__ == '__main__':
     # Simulation parameters
     Nm = 800  # Grid points for each axis
     T = 20  # Periods
-    k = 72  # Nearest neighbors points for RFC search 
+    k = 70  # Nearest neighbors points for RFC search 
     s = 0.05  # Proportion of the grid to be used in the RFC at each iteration of RFC
     rho_r = 0.33  # Max radius for RFC to eliminate points 
     rho_rI = 0.5  # Radius for RFC to search for intersections
-    J_bar = 1.000000001 # Jump detection threshold
+    J_bar = 1 + 1e-8 # Jump detection threshold
     k1 = 30  # Neighbors for intersection point search
     k2 = 1  # Neighbors of uniform grid to construct triangulation for interpolation
     segplot_t = 13  # t for plotting constrained regions
@@ -62,7 +62,6 @@ if __name__ == '__main__':
             'intersection': False,
             'interp_intersect': False,
             's': s,
-            'fill_holes': False,
             'correct_jumps': True, 
             't_save': segplot_t
         }

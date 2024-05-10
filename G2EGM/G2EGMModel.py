@@ -93,7 +93,7 @@ class G2EGMModelClass(ModelClass):
         par.J_bar = 1.01
         par.PolInds = [0,2]
         par.GdistInds = [0,2]
-        par.max_iter = 8
+        par.max_iter = 10
         par.n_closest = 5
         par.do_print = False
         par.save_data = False

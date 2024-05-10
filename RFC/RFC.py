@@ -615,10 +615,10 @@ def RFC(M, gradM, Qval,sigma,\
             # make 1d array out of testind1 nd testind
             #test_inds = np.unique(np.hstack((test_inds, test_inds1)))
 
-            test_inds_fresh = np.random.choice(np.arange(len(M_clean)),\
-                                  size = int(s1*0.1), replace=True)
+            #test_inds_fresh = np.random.choice(np.arange(len(M_clean)),\
+            #                      size = int(s1*0.1), replace=True)
                 
-            optimal_points_inds = np.unique(np.append(optimal_points_inds, test_inds_fresh))
+            #optimal_points_inds = np.unique(np.append(optimal_points_inds, test_inds_fresh))
 
             
             
