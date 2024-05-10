@@ -39,20 +39,15 @@ def plot_timing_data(results, plot_path, NM_list, labels):
 		
 		for i,Nm in zip(range(len(NM_list)),NM_list):
 			grid_label = f'{Nm}'
-			avg_time_iters[i] = results[Nm][model][0]['average_time_iter']
-			if Nm>600 and model == 'RFC':
-				avg_time_iters[i] = avg_time_iters[i]
-			#median_time_iters[i] = results[Nm][model][0]['median_time_iter']
+			avg_time_iters[i] = results[Nm][model][0]['average_time_iter']s
 			grid_sizes[i] = results[Nm][model][0]['grid_size']
 
 		ax.plot(grid_sizes[1:], avg_time_iters[1:], label=label, marker=markers[j], linestyle='-', color=palette[j])
 		ax.set_xlabel('Exogenous grid size')
 		ax.set_ylabel('Average time (min.)')
-		#plt.title('Average Solution Time')
 		ax.legend()
 		ax.grid(True)
-		#plt.tight_layout()
-		#plt.show()
+
 		j += 1
 	# save to plot path
 	plt.savefig(plot_path + 'timings.png')
@@ -75,13 +70,8 @@ def plot_timing_data(results, plot_path, NM_list, labels):
 		ax.plot(grid_sizes[1:], avg_euler[1:], label=label, marker=markers[j], linestyle='-', color=palette[j])
 		ax.set_xlabel('Exogenous grid size')
 		ax.set_ylabel('Avg. lg of relative Euler error')
-		#plt.title('Average Euler Error')
 		ax.legend()
-		ax.grid(True)
-		#ax.set_ylim(-2.5, 2)
-		#ax.set_yticks(np.arange(-2, 2.5, 0.5))
-		#plt.tight_layout()
-		#plt.show()
+		ax.grid(True) 
 		j += 1
 	
 	# save to plot path
@@ -170,12 +160,7 @@ def timing(model,
 			print(f'5th percentile: {np.nanpercentile(model.sim.euler,5)}')
 			print(f'75th percentile: {np.nanpercentile(model.sim.euler,75)}')
 			print(f'0.1th percentile: {np.nanpercentile(model.sim.euler,0.1)}')
-			# print kurtosis of Euler Errors
 			print(f'Kurtosis of Euler Errors: {kurtosis(model.sim.euler[~np.isnan(model.sim.euler)],nan_policy="omit")}')
-			
-			# histogram Euler Errors 
-			#figs.euler_hist(np.ravel(model.sim.euler),name)
-			
 			
 		if tot_time < time_best:
 			time_best = tot_time
