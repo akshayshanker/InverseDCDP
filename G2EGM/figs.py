@@ -374,7 +374,7 @@ def Kregions(model_RFC, egrids_raw, egrids_clean, e_grids_intersect, plot_path, 
     ax.set_xlabel(r'End of time $t$ pension assets')
 
     ax.set_title('Exogenous grid')
-    fig.legend(loc='upper center', bbox_to_anchor=(0.5, 0.05), ncol=4)
-    plt.savefig('{}/segments_clean.png'.format(plot_path))
+    #fig.legend(loc='upper center', bbox_to_anchor=(0.5, 0.05), ncol=4)
+    plt.savefig('{}/regions_t_{}.png'.format(plot_path,t))
 
     return None
