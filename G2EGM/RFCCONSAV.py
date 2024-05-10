@@ -334,7 +334,10 @@ def invert_acon(w,wa,wb,par):
     gr_m_now = utility.marg_func(c,par)
 
     # complementarity slackness
-    for i in range(n.shape[0]):       
+    for i in range(n.shape[0]):
+       
+       #enforce complementary slackness
+       
        for j in range(n.shape[1]):
             mu_f = gr_m_now[i,j] - wa_acon[i,j]
             if mu_f<0:
@@ -434,6 +437,8 @@ def combine_invert(w,wa,wb,par):
     gr_n1 = np.concatenate((gr_n.ravel(), gr_n_d.ravel(), gr_n_a.ravel(), gr_n_c.ravel()), axis=0)
     b1 = np.concatenate((b.ravel(), b_d.ravel(), b_a.ravel(), b_c.ravel()), axis=0)
 
+    #valid_mask = upperenvelope.compute_valid_only(m1,n1,c1,d1,v1,par)
+    #apply_mask(n1, m1, valid_mask)
 
     return n1,m1,v1,c1,b1,d1,gr_n1,gr_m1
 
@@ -493,9 +498,10 @@ def solve(t,sol,par):
         policies[:,:,2][np.isnan(policies[:,:,2])] = 0
         sol.c[t,:,:] = correct_jumps_gradient_2d(policies[:,:,1],par.grid_m_nd.reshape((par.Nn,par.Nm))[1,:],par.grid_n_nd.reshape((par.Nn,par.Nm))[:,1],par.J_bar)
         sol.d[t,:,:] = correct_jumps_gradient_2d(policies[:,:,2],par.grid_m_nd.reshape((par.Nn,par.Nm))[1,:],par.grid_n_nd.reshape((par.Nn,par.Nm))[:,1], par.J_bar)
-        sol.d[t,:,:][sol.d[t,:,:]<1e-10] = 0
-        sol.d[t,:,:][sol.d[t,:,:]>5] = 0
+        #sol.d[t,:,:][sol.d[t,:,:]<1e-10] = 0
+        #sol.d[t,:,:][sol.d[t,:,:]>5] = 0
 
+        
     
     else:
         sol.c[t,:,:] = policies[:,:,1]

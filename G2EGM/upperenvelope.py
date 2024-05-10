@@ -75,12 +75,12 @@ def compute_valid_only(m,n,c,d,v,par,valt=np.array([[]])):
             #valid[i_b,i_a] &= d[i_b,i_a] >= -0.00050
             #valid[i_b,i_a] &= m[i_b,i_a] > -0.01
             #valid[i_b,i_a] &= n[i_b,i_a] > -0.01
-            valid[i_b,i_a] &= m[i_b,i_a] < par.m_max + 1
-            valid[i_b,i_a] &= n[i_b,i_a] < par.n_max + 1
-            valid[i_b,i_a] &= c[i_b,i_a] >=-0.00050
-            valid[i_b,i_a] &= d[i_b,i_a] >= -0.00050
-            valid[i_b,i_a] &= m[i_b,i_a] > -0.1
-            valid[i_b,i_a] &= n[i_b,i_a] > -0.1
+            valid[i_b,i_a] &= m[i_b,i_a] < par.m_max + .1
+            valid[i_b,i_a] &= n[i_b,i_a] < par.n_max + .1
+            valid[i_b,i_a] &= c[i_b,i_a] >=-0.0000050
+            valid[i_b,i_a] &= d[i_b,i_a] >= -0.000050
+            valid[i_b,i_a] &= m[i_b,i_a] > -0.01
+            valid[i_b,i_a] &= n[i_b,i_a] > -0.01
 
             if valt.size > 0:
                 valid[i_b,i_a] &= v[i_b,i_a] > valt[i_b,i_a]
