@@ -8,14 +8,15 @@ Repository for `Discrete-continuous High Dimensional Dynamic Optimization' by Do
 python3 plotPension.py
 ``` 
 
+<center>
+
 |                   | RFC+ Delaunay | G2EGM |
 |-------------------|---------------|-------|
 | Total time (min)  | 2.46          | 2.41  |
-|-------------------------------------------|
-| Euler errors                              |
-|-------------------------------------------|
+| Euler errors      |               |       |
 | Mean              | -6.661        | -6.572|
 | 5th percentile    | -7.772        | -7.631|
 | 95th percentile   | -4.427        | -4.964|
 | Median            | -6.930        | -6.713|
-|-------------------------------------------|
+
+</center>
