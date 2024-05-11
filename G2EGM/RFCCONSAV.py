@@ -21,6 +21,7 @@ import gc
 import numpy as np
 from numba import njit
 
+
 @njit
 def calculate_gradient_1d(data, x):
     gradients = np.empty_like(data, dtype=np.float64)
@@ -53,7 +54,7 @@ def correct_jumps_gradient_2d(data, x, y, gradient_jump_threshold):
     # Correct row-wise using x values
     for row in range(data.shape[0]):
         gradients = calculate_gradient_1d(data[row], x)
-        for col in range(1, data.shape[1] - 1):
+        for col in range(1, data.shape[1]):
             left_jump = np.abs(gradients[col]) > gradient_jump_threshold
             right_jump = np.abs(gradients[col + 1]) > gradient_jump_threshold
 
@@ -75,7 +76,7 @@ def correct_jumps_gradient_2d(data, x, y, gradient_jump_threshold):
     # Correct column-wise using y values
     for col in range(data.shape[1]):
         gradients = calculate_gradient_1d(data[:, col], y)
-        for row in range(1, data.shape[0] - 1):
+        for row in range(1, data.shape[0]):
             up_jump = np.abs(gradients[row]) > gradient_jump_threshold
             down_jump = np.abs(gradients[row + 1]) > gradient_jump_threshold
 
@@ -175,11 +176,13 @@ def rfc_upper_envelope_inplace(n,m,v,c,b,d,gr_n,gr_m,par,t):
             e_grids_intersect['v'] = Qval_intersect_1
             e_grids_intersect['o'] = sigma_intersect_1
 
+    #start1 = time.time()
     # interpolate policies (note 0 is consumption c and 2 is end deposits d)
     policies_clean = interpolateEGM(nm_clean_relerr,\
                             np.column_stack([vf_clean_relerr,o_clean_relerr[:,[0,2]]]),\
                             par.grid,t,
                             nearest_nans=par.nearest_fill)
+    #print('interp time: ',time.time()-start1)
 
 
     rfc_time = time.time()-start
@@ -494,14 +497,49 @@ def solve(t,sol,par):
         fill_holes(out_c,out_d,out_v,Idcon,w,2,par)
         fill_holes(out_c,out_d,out_v,Iacon,w,3,par)
 
-    if par.correct_jumps and t!= par.T-2:
-        policies[:,:,2][np.isnan(policies[:,:,2])] = 0
-        sol.c[t,:,:] = correct_jumps_gradient_2d(policies[:,:,1],par.grid_m_nd.reshape((par.Nn,par.Nm))[1,:],par.grid_n_nd.reshape((par.Nn,par.Nm))[:,1],par.J_bar)
-        sol.d[t,:,:] = correct_jumps_gradient_2d(policies[:,:,2],par.grid_m_nd.reshape((par.Nn,par.Nm))[1,:],par.grid_n_nd.reshape((par.Nn,par.Nm))[:,1], par.J_bar)
+    if par.correct_jumps:
+        """ 
+        Remove interpolated points between future choice specific policy functions
+        by replacing with local extrapolants. 
+        
+        """
+        #policies[:,:,2][np.isnan(policies[:,:,2])] = 0
+        sol.c[t,:,:] = correct_jumps_gradient_2d(policies[:,:,1],\
+                                                 par.grid_m_nd.reshape((par.Nn,par.Nm))[1,:],\
+                                                 par.grid_n_nd.reshape((par.Nn,par.Nm))[:,1],par.J_bar)
+        sol.d[t,:,:] = correct_jumps_gradient_2d(policies[:,:,2],\
+                                                 par.grid_m_nd.reshape((par.Nn,par.Nm))[1,:],\
+                                                par.grid_n_nd.reshape((par.Nn,par.Nm))[:,1], par.J_bar)
         #sol.d[t,:,:][sol.d[t,:,:]<1e-10] = 0
         #sol.d[t,:,:][sol.d[t,:,:]>5] = 0
 
+        # replace NaNs in value function wth continuation value
+        b_end = par.grid_n_nd + sol.d[t,:,:] + pens.func(sol.d[t,:,:],par)
+        a_end = par.grid_m_nd - sol.c[t,:,:] - sol.d[t,:,:]
+        w_nxt = np.zeros(sol.c[t,:,:].shape)
         
+        linear_interp.interp_2d_vec(par.grid_b_pd,par.grid_a_pd,\
+                                    w,b_end.ravel(),a_end.ravel(),w_nxt.ravel())
+        
+        continuation_value = w_nxt.reshape((par.Nn,par.Nm))\
+                                 +  utility.func(sol.c[t,:,:],par) 
+        policies[:,:,0][np.isnan(policies[:,:,0])] = continuation_value[np.isnan(policies[:,:,0])]
+
+        out_c = sol.c[t,:,:]
+        out_d = sol.d[t,:,:]
+        out_v = policies[:,:,0]
+        
+
+        #holes = np.zeros((par.Nn,par.Nm))
+        #holes[np.isnan(out_c)] = 1
+        #holes[np.isnan(out_d)] = 1
+        #Iucon = holes == 1
+
+        #fill_holes(out_c,out_d,out_v,Iucon,w,1,par)
+
+        #nearest_function_ND = nearestND(par.grid,policies.reshape((par.Nn*par.Nm,3)))
+        #pols_nearest = nearest_function_ND(par.grid).reshape((par.Nn,par.Nm,3))
+        #policies[np.isnan(policies)] = pols_nearest[np.isnan(policies)]
     
     else:
         sol.c[t,:,:] = policies[:,:,1]

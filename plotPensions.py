@@ -26,19 +26,20 @@ from timingPensions import timing
 # Suppress all numpy errors (overflows, divisions by zero, etc.)
 np.seterr(all='ignore')
 
+
 if __name__ == '__main__':
     
     # Simulation parameters
-    Nm = 800  # Grid points for each axis
-    T = 20  # Periods
-    k = 75  # Nearest neighbors points for RFC search 
-    s = 0.05  # Proportion of the grid to be used in the RFC at each iteration of RFC
-    rho_r = 0.33  # Max radius for RFC to eliminate points 
-    rho_rI = 0.5  # Radius for RFC to search for intersections
-    J_bar = 1 + 1e-5 # Jump detection threshold
-    k1 = 30  # Neighbors for intersection point search
-    k2 = 1  # Neighbors of uniform grid to construct triangulation for interpolation
-    segplot_t = 13  # t for plotting constrained regions
+    Nm = 800    # Grid points for each axis
+    T = 20      # Periods
+    k = 75      # Nearest neighbors points for RFC search 
+    s = 0.0475  # Proportion of the grid to be used in the RFC at each iteration of RFC
+    rho_r = 0.33        # Max radius for RFC to eliminate points 
+    rho_rI = 0.475      # Radius for RFC to search for intersections
+    J_bar = 1 + 1e-5    # Jump detection threshold
+    k1 = 30             # Neighbors for intersection point search
+    k2 = 1              # Neighbors of uniform grid to construct triangulation for interpolation
+    segplot_t = 13      # t for plotting constrained regions
     do_print = False
     
     # File paths for saving plots and data
@@ -102,44 +103,40 @@ if __name__ == '__main__':
 
     postfix = '_G2EGM_vs_RFC'
     
-    # b. euler erros
+    # b. euler errors
     lines = []
-    txt = 'All (average)'
+    txt = '| All (average)'
     for i,model in enumerate(models):
-        txt += f' & {np.nanmean(model.sim.euler):.3f}'
-    txt += '\\\\ \n'
+        txt += f' | {np.nanmean(model.sim.euler):.3f}'
+    txt += ' |\n'
     lines.append(txt)
 
-    txt = '\\,\\,5th percentile'
+    txt = '| 5th percentile'
     for i,model in enumerate(models):
-        txt += f' & {np.nanpercentile(model.sim.euler,5):.3f}'
-    txt += '\\\\ \n'    
+        txt += f' | {np.nanpercentile(model.sim.euler,5):.3f}'
+    txt += ' |\n'    
     lines.append(txt)
 
-    txt = '\\,\\,95th percentile'
+    txt = '| 95th percentile'
     for i,model in enumerate(models):
-        txt += f' & {np.nanpercentile(model.sim.euler,95):.3f}'
-    txt += '\\\\ \n'   
+        txt += f' | {np.nanpercentile(model.sim.euler,95):.3f}'
+    txt += ' |\n'   
     lines.append(txt)
 
-    txt = '\\,\\,Median'
+    txt = '| Median'
     for i,model in enumerate(models):
-        txt += f' & {np.nanpercentile(model.sim.euler,50):.3f}'
-    txt += '\\\\ \n'   
+        txt += f' | {np.nanpercentile(model.sim.euler,50):.3f}'
+    txt += ' |\n'   
     lines.append(txt)
 
-    with open(f'tabs_euler_errors{postfix}.tex', 'w') as txtfile:
-        txtfile.writelines(lines)
-        
     # c. timings
-    lines = []
-    txt = 'Total'
+    txt = '| Total time (min)'
     for model in models:
-        txt += f' & {np.sum(model.par.time_work)/60:.2f}'
-    txt += '\\\\ \n'
+        txt += f' | {np.sum(model.par.time_work)/60:.2f}'
+    txt += ' |\n'
     lines.append(txt)
 
-
-    with open(f'tabs_timings{postfix}.tex', 'w') as txtfile:
+    with open(f'tabs_euler_errors{postfix}.md', 'w') as txtfile:
         txtfile.writelines(lines)
+
 
