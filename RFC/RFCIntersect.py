@@ -2,7 +2,7 @@ from numba import njit
 import numpy as np
 import time
 from scipy.interpolate import interp1d
-from scipy.spatial import KDTree
+from pykdtree.kdtree import KDTree as KDTree1
 
 
 
