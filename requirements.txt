@@ -1,3 +1,4 @@
+python3==3.12.1
 numba==0.59.1
 pykdtree==1.3.12
 ConSav==0.11
