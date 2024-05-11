@@ -39,7 +39,7 @@ def plot_timing_data(results, plot_path, NM_list, labels):
 		
 		for i,Nm in zip(range(len(NM_list)),NM_list):
 			grid_label = f'{Nm}'
-			avg_time_iters[i] = results[Nm][model][0]['average_time_iter']s
+			avg_time_iters[i] = results[Nm][model][0]['average_time_iter']
 			grid_sizes[i] = results[Nm][model][0]['grid_size']
 
 		ax.plot(grid_sizes[1:], avg_time_iters[1:], label=label, marker=markers[j], linestyle='-', color=palette[j])
