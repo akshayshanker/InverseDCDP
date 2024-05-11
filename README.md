@@ -2,7 +2,7 @@
 Repository for `Discrete-continuous High Dimensional Dynamic Optimization' by Dobrescu and Shanker (2024)
 
 
-## Benchmark application: pension saving problem by Dreudhal and Jorgensen (2017)
+## Benchmark application: pension saving and retirement by Dreudhal and Jorgensen (2017)
 
 ```
 python3 plotPension.py
