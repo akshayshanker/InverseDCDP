@@ -32,12 +32,11 @@ Using Theorem 1 to eliminate sub-optimal points that violate complementary slack
 
 |                     | RFC+ Delaunay | G2EGM      |
 |---------------------|---------------|------------|
-| All (average)       | -6.231        | -5.130     |
-| 5th percentile      | -7.467        | -7.149     |
-| 95th percentile     | -4.156        | -1.433     |
-| Median              | -6.472        | -6.103     |
-| Total time (min)    | 1.07          | 1.67       |
-| Inversion time (min)| 0.08          | 0.00       |
-| RFC time (min)      | 0.29          | 0.00       |
+| Total time (min)    | 2.32          | 3.73       |
+| Euler errors        |               |            |
+| All (average)       | -6.542        | -5.872     |
+| 5th percentile      | -7.855        | -7.593     |
+| 95th percentile     | -3.982        | -1.807     |
+| Median              | -6.844        | -6.531     |
 
 
