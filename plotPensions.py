@@ -20,7 +20,7 @@ was modified to:
 import numpy as np
 import dill as pickle
 from G2EGM.G2EGMModel import G2EGMModelClass
-from G2EGM.figs import euler_hist, Kregions, decision_functions
+from G2EGM.figs import euler_hist, Kregions, decision_functions, segments
 from timingPensions import timing
 
 # Suppress all numpy errors (overflows, divisions by zero, etc.)
@@ -32,15 +32,16 @@ if __name__ == '__main__':
     # Simulation parameters
     Nm = 800    # Grid points for each axis
     T = 20      # Periods
-    k = 75      # Nearest neighbors points for RFC search 
-    s = 0.0475  # Proportion of the grid to be used in the RFC at each iteration of RFC
+    k = 65      # Nearest neighbors points for RFC search 
+    s = 0.08    # Proportion of the grid to be used in the RFC at each iteration of RFC
     rho_r = 0.33        # Max radius for RFC to eliminate points 
     rho_rI = 0.475      # Radius for RFC to search for intersections
-    J_bar = 1 + 1e-5    # Jump detection threshold
-    k1 = 30             # Neighbors for intersection point search
+    J_bar = 1 + 1e-5   # Jump detection threshold
+    k1 = 30              # Neighbors for intersection point search
     k2 = 1              # Neighbors of uniform grid to construct triangulation for interpolation
-    segplot_t = 13      # t for plotting constrained regions
-    do_print = False
+    segplot_t = 3       # t for plotting constrained regions
+    do_print = True
+    p_L = 1  # Upper bound for pension contributions
     
     # File paths for saving plots and data
     scrpath = '/scratch/tp66/dcdp/data/' # drive where raw egmgrids are saved 
@@ -65,11 +66,17 @@ if __name__ == '__main__':
             's': s,
             'correct_jumps': True, 
             't_save': segplot_t, 
-            'do_print': do_print
+            'do_print': do_print,
+            'p_L': p_L,
+            'save_data': False
         }
     )
+    
+    #
     model_RFC.precompile_numba()
-    model_RFC = timing(model_RFC, rep=5)
+    model_RFC = timing(model_RFC, rep=1)
+
+    #segments(model_RFC, 2,'test')
 
     # Initialize and configure the G2EGM model
     model_G2EGM = G2EGMModelClass(
@@ -78,15 +85,18 @@ if __name__ == '__main__':
             'solmethod': 'G2EGM',
             'T': T,
             'do_print': do_print,
-            'Nm': Nm
+            'Nm': Nm,
+            'p_L': p_L,
         }
     )
     
     model_G2EGM.precompile_numba()
-    model_G2EGM = timing(model_G2EGM, rep=5)
+    model_G2EGM = timing(model_G2EGM, rep=1)
+    
+    #segments(model_G2EGM, 3,'testG2E')
 
     # Load endogenous grid data
-    egrids_intersect = pickle.load(open(f"{scrpath}/e_grids_intersect.pkl", "rb"))
+    egrids_intersect = pickle.load(open(f"{scrpath}e_grids_intersect.pkl", "rb"))
     egrids_clean = pickle.load(open(f"{scrpath}/e_grids_clean.pkl", "rb"))
     egrids_raw = pickle.load(open(f"{scrpath}/e_grid_raw.pkl", "rb"))
 
@@ -96,6 +106,7 @@ if __name__ == '__main__':
 
     # Plot K regions
     Kregions(model_RFC, egrids_raw, egrids_clean, egrids_intersect, plotpath, segplot_t)
+    
     decision_functions(model_RFC,3,'RFC_t3')
 
     models = [model_RFC, model_G2EGM]
@@ -133,6 +144,18 @@ if __name__ == '__main__':
     txt = '| Total time (min)'
     for model in models:
         txt += f' | {np.sum(model.par.time_work)/60:.2f}'
+    txt += ' |\n'
+    lines.append(txt)
+
+    txt = '|   Inversion time (min)'
+    for model in models:
+        txt += f' | {np.sum(model.par.time_invert)/60:.2f}'
+    txt += ' |\n'
+    lines.append(txt)
+
+    txt = '|   RFC time (min)'
+    for model in models:
+        txt += f' | {np.sum(model.par.time_rfc)/60:.2f}'
     txt += ' |\n'
     lines.append(txt)
 

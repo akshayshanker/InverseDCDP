@@ -59,6 +59,8 @@ def solve_ucon(out_c,out_d,out_v,w,wa,wb,par):
     b = par.grid_b_pd_nd
     m,n,v = inv_mn_and_v(c,d,a,b,w,par)
 
+    #elif wa[i,j] - wb[i,j]<0 and np.abs(d[i,j])> par.p_L:
+
     # iii. upperenvelope and interp to common
     upperenvelope.compute(out_c,out_d,out_v,m,n,c,d,v,num,w,par)
 
@@ -74,6 +76,28 @@ def solve_dcon(out_c,out_d,out_v,w,wa,par):
     # ii. states and value
     a = par.grid_a_pd_nd
     b = par.grid_b_pd_nd
+    m,n,v = inv_mn_and_v(c,d,a,b,w,par)
+                        
+    # iii. value of deviating a bit from the constraint
+    valt = np.zeros(v.shape)
+    deviate_d_con(valt,n,c,a,w,par)
+        
+    # v. upperenvelope and interp to common
+    upperenvelope.compute(out_c,out_d,out_v,m,n,c,d,v,num,w,par,valt)
+
+@njit
+def solve_dcon_L(out_c,out_d,out_v,w,wa,par):
+
+    num = 2
+
+    # i. decisions                
+    c = utility.inv_marg_func(wa,par)
+    d = par.d_dcon + par.p_L
+    #d = np.full(c.shape, par.d_dcon + par.p_L)
+        
+    # ii. states and value
+    a = par.grid_a_pd_nd
+    b = par.grid_b_pd_nd 
     m,n,v = inv_mn_and_v(c,d,a,b,w,par)
                         
     # iii. value of deviating a bit from the constraint
@@ -141,6 +165,29 @@ def solve_con(out_c,out_d,out_v,w,par):
     out_v[:] = v
 
 @njit
+def solve_con_L(out_c,out_d,out_v,w,par):
+                        
+    # i. choices
+    c = par.grid_m_nd - par.p_L
+    d = np.zeros(c.shape) + par.p_L
+    #d  = np.full(c.shape, par.p_L)
+        
+    # ii. post-decision states
+    a = np.zeros(c.shape)
+    b = par.grid_n_nd 
+
+    # iii. post decision value
+    w_con = np.zeros(c.shape)
+    linear_interp.interp_2d_vec(par.grid_b_pd,par.grid_a_pd,w,b.ravel(),a.ravel(),w_con.ravel())
+
+    # iv. value
+    v = utility.func(c,par) + w_con     
+
+    out_c[:] = c
+    out_d[:] = d
+    out_v[:] = v
+
+@njit
 def solve(t,sol,par):
 
     w = sol.w[t]
@@ -152,9 +199,18 @@ def solve(t,sol,par):
     solve_dcon(sol.dcon_c[t,:,:],sol.dcon_d[t,:,:],sol.dcon_v[t,:,:],w,wa,par)
     solve_acon(sol.acon_c[t,:,:],sol.acon_d[t,:,:],sol.acon_v[t,:,:],w,wb,par)
     solve_con(sol.con_c[t,:,:],sol.con_d[t,:,:],sol.con_v[t,:,:],w,par)
+    
+    if par.p_L<100:
+        solve_con_L(sol.con_c_L[t,:,:],sol.con_d_L[t,:,:],sol.con_v_L[t,:,:],w,par)
+        solve_dcon_L(sol.dcon_c_L[t,:,:],sol.dcon_d_L[t,:,:],sol.dcon_v_L[t,:,:],w,wa,par)
 
-    # b. upper envelope    
-    seg_max = np.zeros(4)
+    # b. upper envelope
+    segs = 4 
+    
+    if par.p_L<100:
+        segs = 6
+
+    seg_max = np.zeros(segs)
     for i_n in range(par.Nn):
         for i_m in range(par.Nm):
 
@@ -163,6 +219,19 @@ def solve(t,sol,par):
             seg_max[1] = sol.dcon_v[t,i_n,i_m]
             seg_max[2] = sol.acon_v[t,i_n,i_m]
             seg_max[3] = sol.con_v[t,i_n,i_m]
+            
+            if par.p_L < 100:
+                seg_max[4] = sol.con_v_L[t,i_n,i_m]
+                seg_max[5] = sol.dcon_v_L[t,i_n,i_m]
+
+                if sol.ucon_d[t,i_n,i_m] > par.p_L:
+                    seg_max[0] = -np.inf
+                if sol.dcon_d[t,i_n,i_m] > par.p_L:
+                    seg_max[1] = -np.inf
+                if sol.acon_d[t,i_n,i_m] > par.p_L:
+                    seg_max[2] = -np.inf
+                if sol.con_d[t,i_n,i_m] > par.p_L:
+                    seg_max[3] = -np.inf
 
             i = np.argmax(seg_max)
 
@@ -181,6 +250,13 @@ def solve(t,sol,par):
             elif i == 3:
                 sol.c[t,i_n,i_m] = sol.con_c[t,i_n,i_m]
                 sol.d[t,i_n,i_m] = sol.con_d[t,i_n,i_m]
+            elif i == 4 and par.p_L < 100:
+                sol.c[t,i_n,i_m] = sol.con_c_L[t,i_n,i_m]
+                sol.d[t,i_n,i_m] = sol.con_d_L[t,i_n,i_m]
+            elif i == 5 and par.p_L < 100:
+                sol.c[t,i_n,i_m] = sol.dcon_c_L[t,i_n,i_m]
+                sol.d[t,i_n,i_m] = sol.dcon_d_L[t,i_n,i_m]
+
         
     # c. derivatives 
     
