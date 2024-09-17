@@ -15,7 +15,7 @@ def plot_timing_data(results, plot_path, NM_list, labels):
 	
 	"""
 	sns.set(style="white", rc={
-		"font.size": 11, "axes.titlesize": 11, "axes.labelsize": 11})
+		"font.size": 14, "axes.titlesize": 14, "axes.labelsize": 14})
 	
 
 	palette = sns.color_palette("cubehelix", 3)
@@ -27,12 +27,46 @@ def plot_timing_data(results, plot_path, NM_list, labels):
 	markers = ['o', 'x', 'D']
 	
 	models = ['G2EGM', 'RFC', 'NEGM']
+	modelsRHS = ['G2EGM_cons', 'RFC_cons']
+	labels_cons = ['G2EGM', 'RFC with Delaunay']
 	# Plotting
-	plt.figure(figsize=(8, 6))
-	fig = plt.figure(figsize=(8, 6))
-	ax = fig.add_subplot(1,1,1)
+	#plt.figure(figsize=(8, 6))
+	fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+	# fig with two cols 
+	#ax1 = fig.add_subplot(1,2,1)
 	j = 0
+
 	for model, label in zip(models, labels):
+		avg_time_iters = np.arange(0, len(NM_list)).astype(float)
+		rfc_time_iters = np.arange(0, len(NM_list)).astype(float)
+		#median_time_iters = np.arange(0, len(NM_list)).astype(float)
+		grid_sizes = np.arange(0, len(NM_list)).astype(float)
+		
+		for i,Nm in zip(range(len(NM_list)),NM_list):
+			grid_label = f'{Nm}'
+			avg_time_iters[i] = results[Nm][model][0]['average_time_iter']
+			grid_sizes[i] = results[Nm][model][0]['grid_size']
+			if model == 'RFC':
+				rfc_time_iters[i] = results[Nm][model][0]['avg_time_RFC'] 
+			#rfc_time_iters[i] = results[Nm][model][0]['avg_time_RFC']
+
+		if model == 'RFC':
+			ax1.plot(grid_sizes[1:], rfc_time_iters[1:], label='RFC', linestyle='dashed', color=palette[j])
+
+		ax1.plot(grid_sizes[1:], avg_time_iters[1:], label=label, marker=markers[j], linestyle='-', color=palette[j])
+		ax1.set_xlabel('Number of grid points')
+		ax1.set_ylabel('Average time (min.)')
+		ax1.set_title('No pension cap - 4 cons. regions')
+		ax1.set_ylim(0, 25)
+		ax1.set_yticks(np.arange(0, 25, 5))
+		#ax1.legend()
+		ax1.grid(True)
+
+	
+		j += 1
+	
+	j = 0 
+	for model, label in zip(modelsRHS, labels_cons):
 		avg_time_iters = np.arange(0, len(NM_list)).astype(float)
 		#median_time_iters = np.arange(0, len(NM_list)).astype(float)
 		grid_sizes = np.arange(0, len(NM_list)).astype(float)
@@ -41,15 +75,35 @@ def plot_timing_data(results, plot_path, NM_list, labels):
 			grid_label = f'{Nm}'
 			avg_time_iters[i] = results[Nm][model][0]['average_time_iter']
 			grid_sizes[i] = results[Nm][model][0]['grid_size']
+			if model == 'RFC_cons':
+				rfc_time_iters[i] = results[Nm][model][0]['avg_time_RFC'] 
 
-		ax.plot(grid_sizes[1:], avg_time_iters[1:], label=label, marker=markers[j], linestyle='-', color=palette[j])
-		ax.set_xlabel('Exogenous grid size')
-		ax.set_ylabel('Average time (min.)')
-		ax.legend()
-		ax.grid(True)
-
+		if model == 'RFC_cons':
+			ax2.plot(grid_sizes[1:], rfc_time_iters[1:], linestyle='dashed', color=palette[j])
+		
+		ax2.plot(grid_sizes[1:], avg_time_iters[1:], marker=markers[j], linestyle='-', color=palette[j])
+		ax2.set_xlabel('Number of grid points')
+		ax2.set_ylabel('Average time (min.)')
+		ax2.set_title('Pension cap - 6 cons. regions')
+		ax2.set_ylim(0, 25)
+		ax2.set_yticks(np.arange(0, 25, 5))
+		# set horizontal grid lines
+		#ax.
+		#ax2.legend()
+		ax2.grid(True)
 		j += 1
+	#
+	
+	#fig.subplots_adjust(bottom=.05)  # adjust as needed
+	fig.tight_layout()
+	fig.subplots_adjust(bottom=0.2)
+	fig.legend(loc='upper center', bbox_to_anchor=(0.5, 0.1), shadow=False, ncol=4, frameon=False)
+	
+	
 	# save to plot path
+	#fig.subplots_adjust(bottom=0.2)  # adjust the bottom parameter as needed
+	#fig.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), shadow=False, ncol=4)
+	
 	plt.savefig(plot_path + 'timings.png')
 
 	# Euler errors 
@@ -184,95 +238,105 @@ if __name__ == '__main__':
 	nb.set_num_threads(1)
 	import numpy as np
 
-
+	# MPI communicators 
 	rank = MPI.COMM_WORLD.Get_rank()
 	solve = False
 	size = MPI.COMM_WORLD.Get_size()
+	
 	# calcuate equal grid spacing of rank siz e between 100 and 1200
-	#gridSizeMax = 1200
-	#gridSizeMin = 200
-	#NmList = np.linspace(gridSizeMin, gridSizeMax, size, dtype=int)
-	##NmList = np.round(NmList / 50) * 50
-	#NmList = NmList.astype(int)
-   
-	NmList = np.arange(200, 900, 30)
+	gridSizeMax = 1000
+	gridSizeMin = 200
+	NmList = np.linspace(gridSizeMin, gridSizeMax, size, dtype=int)
+	NmList = np.round(NmList / 50) * 50
+	NmList = NmList.astype(int)
 	Nm = NmList[rank]
 
-	#if solve == False:
-		#size = 24
-		#NmList = np.linspace(gridSizeMin, gridSizeMax, size, dtype=int)
-		#NmList = np.round(NmList / 50) * 50
-		#NmList = NmList.astype(int)
-		#Nm = NmList[rank]
+
+	if solve == False:
+		size = 24
+		NmList = np.linspace(gridSizeMin, gridSizeMax, size, dtype=int)
+		NmList = np.round(NmList / 50) * 50
+		NmList = NmList.astype(int)
+		Nm = NmList[rank]
 
 	#Settings
-	T = 20
+	T = 15
 	Neta = 16
 	var_eta = 0.1**2
 	do_print = False
 	nameres = sys.argv[1]
+	rep = 1
 
-	# Build all the models 
-	#RFC
+	# RFC timings that depend on the grid size
 	rad = 300/Nm
+	k = 70
+	if Nm < 500:
+		k = 85
+	J_bar = 1 + 1E-05
+	p_L = 1
+	max_iter_rfc = 10
+	s = 0.045
 
 	if solve:
+
+		#RFC baseline 
 		model_RFC = G2EGMModelClass(name='RFC',\
 												par={'solmethod':'RFC','T':T,\
 														'do_print':do_print,\
-														'k': 65, 'Nm':Nm,\
+														'k': k, 'Nm':Nm,\
 														'rad':rad, 'rad_I':rad,\
-														'M_bar': 1.0001,\
-														'k1':1,\
+														'J_bar': J_bar,\
+														'k1':40,\
 														'k2':1,\
 														'intersection': False,\
 														'interp_intersect': False,\
-														's':0.045,\
-														'max_iter': 5,\
-														'n_closest': 3,\
-														'nearest_fill': True,\
-														'correct_jumps': False})
+														's':s,\
+														'max_iter': max_iter_rfc,\
+														'n_closest': 2,\
+														'nearest_fill': False,\
+														'correct_jumps': True})
 		model_RFC.precompile_numba()
-		model_RFC = timing(model_RFC, rep=1)
-		#figs.decision_functions(model_RFC,2,"RFC_{}".format(Nm))
-		#figs.segments(model_RFC,2,"RFC_{}".format(Nm))
+		model_RFC = timing(model_RFC, rep=rep)
 
-
-		#RFC with intersection 
-		model_RFC_intersect = G2EGMModelClass(name='RFC_intersect',\
+		#RFC with added constraint  
+		model_RFC_cons = G2EGMModelClass(name='RFC_cons',\
 													par={'solmethod':'RFC','T':T,\
 														'do_print':do_print,\
-														'k': 60, 'Nm':Nm,\
+														'k': k, 'Nm':Nm,\
 														'rad':rad, 'rad_I':rad,\
-														'M_bar': 1.0001,\
+														'J_bar': J_bar,\
 														'k1':40,\
 														'k2':1,\
-														'intersection': True,\
+														'intersection': False,\
 														'interp_intersect': False,\
-														's':0.06,\
-														'max_iter': 10,\
+														's':s,\
+														'max_iter': max_iter_rfc,\
 														'n_closest': 2,\
-														'nearest_fill': True,\
-														'correct_jumps': False})
-		model_RFC_intersect.precompile_numba()
-		model_RFC_intersect = timing(model_RFC_intersect, rep=1)
-		#figs.decision_functions(model_RFC_intersect,2,"RFC_intersect_{:.0f}".format(Nm))
-		#figs.segments(model_RFC_intersect,2,"RFC_intersect_{:.0f}".format(Nm))
-
+														'nearest_fill': False,\
+														'correct_jumps': True, 
+														 'p_L': p_L})
+		model_RFC_cons.precompile_numba()
+		model_RFC_cons = timing(model_RFC_cons, rep=rep)
 
 		#NEGM
 
-		model_NEGM = G2EGMModelClass(name='NEGM',par={'solmethod':'NEGM','T':T,'do_print':do_print, 'Nm':Nm})
+		model_NEGM = G2EGMModelClass(name='NEGM',par={'solmethod':'NEGM',\
+												'T':T,'do_print':do_print, 'Nm':Nm})
 		model_NEGM.precompile_numba()
 		model_NEGM = timing(model_NEGM, rep=1)
 
-		
-		#G2EGM
-		model_G2EGM = G2EGMModelClass(name='G2EGM',par={'solmethod':'G2EGM','T':T,'do_print':do_print, 'Nm':Nm})
+		#G2EGM baseline 
+		model_G2EGM = G2EGMModelClass(name='G2EGM',par={'solmethod':'G2EGM',\
+												  'T':T,'do_print':do_print, 'Nm':Nm})
 		model_G2EGM.precompile_numba()
 		model_G2EGM = timing(model_G2EGM, rep=1)
-		#figs.decision_functions(model_G2EGM,2,"G2EGM_{:.0f}".format(Nm))
-		#figs.segments(model_G2EGM,2,"G2EGM_{:.0f}".format(Nm))
+
+		# G2EGM with added constraint
+		model_G2EGM_cons = G2EGMModelClass(name='G2EGM_cons',par={'solmethod':'G2EGM',\
+															'T':T,'do_print':do_print, 'Nm':Nm, 'p_L': p_L})
+		model_G2EGM_cons.precompile_numba()
+		model_G2EGM_cons= timing(model_G2EGM_cons, rep=1)
+
 
 		# gather the models on master
 		# format the result on each rank to be consistent with pliot inpits and gathering
@@ -290,6 +354,20 @@ if __name__ == '__main__':
 								'0.1th percentile':np.nanpercentile(model_G2EGM.sim.euler,0.1),\
 								'median_euler':np.nanmedian(model_G2EGM.sim.euler)}]
 		
+		models_RES['G2EGM_cons'] = [{'grid_size': model_G2EGM_cons.par.Nm, 'average_time_iter': np.mean(model_G2EGM_cons.par.time_work),\
+								 'avg_time_EGM': np.mean(model_G2EGM_cons.par.time_egm),\
+								'average_mean_euler':np.nanmean(model_G2EGM_cons.sim.euler), \
+								'average_rmse_euler':np.nanmean((model_G2EGM_cons.sim.euler)**2),\
+								'average_kurtosis_euler':kurtosis(model_G2EGM_cons.sim.euler[~np.isnan(model_G2EGM_cons.sim.euler)],nan_policy="omit"),\
+								'1st percentile':np.nanpercentile(model_G2EGM_cons.sim.euler,1),\
+								'99th percentile':np.nanpercentile(model_G2EGM_cons.sim.euler,99),\
+								'5th percentile':np.nanpercentile(model_G2EGM_cons.sim.euler,5),\
+								'95th percentile':np.nanpercentile(model_G2EGM_cons.sim.euler,95),\
+								'99.9th percentile':np.nanpercentile(model_G2EGM_cons.sim.euler,99.9),\
+								'0.1th percentile':np.nanpercentile(model_G2EGM_cons.sim.euler,0.1),\
+								'median_euler':np.nanmedian(model_G2EGM_cons.sim.euler)}]
+		
+		
 		models_RES['NEGM'] = [{'grid_size': model_NEGM.par.Nm, 'average_time_iter': np.mean(model_NEGM.par.time_work),\
 								'average_mean_euler':np.nanmean(model_NEGM.sim.euler), \
 								'average_rmse_euler':np.nanmean((model_NEGM.sim.euler)**2),\
@@ -304,6 +382,7 @@ if __name__ == '__main__':
 		
 		models_RES['RFC'] = [{'grid_size': model_RFC.par.Nm, 'average_time_iter': np.mean(model_RFC.par.time_work),\
 								'avg_time_RFC': np.mean(model_RFC.par.time_rfc),\
+								'avg_time_inversion': np.mean(model_RFC_cons.par.time_invert),\
 								'average_mean_euler':np.nanmean(model_RFC.sim.euler), \
 								'average_rmse_euler':np.nanmean((model_RFC.sim.euler)**2),\
 								'average_kurtosis_euler':kurtosis(model_RFC.sim.euler[~np.isnan(model_RFC.sim.euler)],nan_policy="omit"),\
@@ -315,9 +394,24 @@ if __name__ == '__main__':
 								'median_euler':np.nanmedian(model_RFC.sim.euler),\
 								'95th percentile':np.nanpercentile(model_RFC.sim.euler,95)}]
 		
+		models_RES['RFC_cons'] = [{'grid_size': model_RFC_cons.par.Nm, 'average_time_iter': np.mean(model_RFC_cons.par.time_work),\
+							      'avg_time_RFC': np.mean(model_RFC_cons.par.time_rfc),\
+								  'avg_time_inversion': np.mean(model_RFC_cons.par.time_invert),\
+									'average_mean_euler':np.nanmean(model_RFC_cons.sim.euler), \
+									'average_rmse_euler':np.nanmean((model_RFC_cons.sim.euler)**2),\
+									'average_kurtosis_euler':kurtosis(model_RFC_cons.sim.euler[~np.isnan(model_RFC_cons.sim.euler)],nan_policy="omit"),\
+									'1st percentile':np.nanpercentile(model_RFC_cons.sim.euler,1),\
+									'99th percentile':np.nanpercentile(model_RFC_cons.sim.euler,99),\
+									'5th percentile':np.nanpercentile(model_RFC_cons.sim.euler,5),\
+									'95th percentile':np.nanpercentile(model_RFC_cons.sim.euler,95),\
+									'99.9th percentile':np.nanpercentile(model_RFC_cons.sim.euler,99.9),\
+									'0.1th percentile':np.nanpercentile(model_RFC_cons.sim.euler,0.1),\
+									'median_euler':np.nanmedian(model_RFC_cons.sim.euler)}]
+		
+		
 		models_RES['grid_size'] = Nm
 
-		# plot histogram of RFC vs G2EGM in the same plot to compare
+		# plot histogram of RFC vs G2EGM 
 		palette = sns.color_palette("cubehelix", 3)
 		color1 = palette[0] 
 		color2 = palette[1]
@@ -337,7 +431,7 @@ if __name__ == '__main__':
 		MPI.COMM_WORLD.barrier()
 		modelsAll = MPI.COMM_WORLD.gather(models_RES,root=0)
 
-		#collect the timings data to plot 
+		# collect the timings data to plot 
 		if rank == 0:
 			# save results
 			pickle.dump(modelsAll, open('plots/pensions/results_{}.pkl'.format(nameres), 'wb'))
@@ -347,7 +441,7 @@ if __name__ == '__main__':
 					results[NmList[rank]] = modelres
 
 			
-			plot_timing_data(results, 'plots/pensions/', NmList)
+			plot_timing_data(results, 'plots/pensions/', NmList, labels)
 	else:
 		if rank == 0:
 			modelsAll = pickle.load(open('plots/pensions/results_{}.pkl'.format(nameres), 'rb'))
@@ -356,6 +450,3 @@ if __name__ == '__main__':
 			for j, modelres in zip(range(len(modelsAll)),modelsAll):
 					results[NmList[j]] = modelres
 			plot_timing_data(results, 'plots/pensions/', NmList, labels)
-
-			#Generate Table
-			#generate_table(results, NmList)

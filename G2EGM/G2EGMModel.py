@@ -83,10 +83,11 @@ class G2EGMModelClass(ModelClass):
         par.n_add = 2.00
         par.phi_n = 1.25  
         par.acon_fac = 0.5
-        par.con_fac = 0.50
-        par.pd_fac = 2.00
+        par.con_fac = 0.5
+        par.pd_fac = 2.01
+        par.pd_fac1 = 1
         par.a_add = -2.00
-        par.b_add = 2.00
+        par.b_add = 0.5
         par.rad = 1e100
         
         # RFC parameters
@@ -111,9 +112,12 @@ class G2EGMModelClass(ModelClass):
         par.delta_con = 0.001
         par.eps = 1e-6
 
+        # pension caps
+        par.p_L = 1e200
+
         
     def allocate(self):
-        """ allocate model, i.e. create grids and allocate solution and simluation arrays """
+        """ allocate model, i.e. create grids and allocate solution and simulation arrays """
 
         # a. grid
         self.create_grids()
@@ -151,12 +155,15 @@ class G2EGMModelClass(ModelClass):
         par.Na_pd = np.int_(np.floor(par.pd_fac*par.Nm))
         par.a_max = par.m_max + par.a_add
         par.grid_a_pd = nonlinspace(0,par.a_max,par.Na_pd,par.phi_m)
+        par.grid_a_pd1 = nonlinspace(0,par.a_max,int(par.Na_pd*par.pd_fac1),par.phi_m)
     
         par.Nb_pd = np.int_(np.floor(par.pd_fac*par.Nn))
         par.b_max = par.n_max + par.b_add
         par.grid_b_pd = nonlinspace(0,par.b_max,par.Nb_pd,par.phi_n)
+        par.grid_b_pd1 = nonlinspace(0,par.b_max,int(par.Nb_pd*par.pd_fac1),par.phi_n)
     
         par.grid_b_pd_nd, par.grid_a_pd_nd = np.meshgrid(par.grid_b_pd,par.grid_a_pd,indexing='ij')
+        par.grid_b_pd1_nd, par.grid_a_pd1_nd = np.meshgrid(par.grid_b_pd1,par.grid_a_pd1,indexing='ij')
         
         # d. working: egm (seperate grids for each segment)
         
@@ -165,6 +172,7 @@ class G2EGMModelClass(ModelClass):
             
             # i. dcon
             par.d_dcon = np.zeros((par.Na_pd,par.Nb_pd),dtype=np.float_,order='C')
+            par.d_dcon1 = np.zeros((int(par.Na_pd*par.acon_fac),int(par.Nb_pd*par.acon_fac)),dtype=np.float_,order='C')
                 
             # ii. acon
             par.Nc_acon = np.int_(np.floor(par.Na_pd*par.acon_fac))
@@ -205,6 +213,7 @@ class G2EGMModelClass(ModelClass):
         par.time_egm = np.zeros(par.T)
         par.time_vfi = np.zeros(par.T)
         par.time_rfc = np.zeros(par.T)
+        par.time_invert = np.zeros(par.T)
 
     def solve(self):
         """ solve the model """
@@ -284,9 +293,19 @@ class G2EGMModelClass(ModelClass):
             sol.acon_c = np.zeros((par.T,par.Nn,par.Nm))
             sol.acon_d = np.zeros((par.T,par.Nn,par.Nm))
             sol.acon_v = np.zeros((par.T,par.Nn,par.Nm))
+            
             sol.con_c = np.zeros((par.T,par.Nn,par.Nm))
             sol.con_d = np.zeros((par.T,par.Nn,par.Nm))
             sol.con_v = np.zeros((par.T,par.Nn,par.Nm))
+
+            sol.con_c_L = np.zeros((par.T,par.Nn,par.Nm))
+            sol.con_d_L = np.zeros((par.T,par.Nn,par.Nm))
+            sol.con_v_L = np.zeros((par.T,par.Nn,par.Nm))
+            
+            sol.dcon_c_L = np.zeros((par.T,par.Nn,par.Nm))
+            sol.dcon_d_L = np.zeros((par.T,par.Nn,par.Nm))
+            sol.dcon_v_L = np.zeros((par.T,par.Nn,par.Nm))
+
 
             sol.z = np.zeros((par.T,par.Nn,par.Nm))
 
@@ -371,6 +390,11 @@ class G2EGMModelClass(ModelClass):
     def solve_RFC(self):
         """ Solve with RFC """
 
+        if self.par.p_L<100:
+            self.par.acon_fac = 0.25
+            self.par.con_fac = 0.25
+            self.par.pd_fac = 1.5
+
         with jit(self) as model:
 
             par = model.par
@@ -414,15 +438,18 @@ class G2EGMModelClass(ModelClass):
 
                 # ii. EGM
                 t0_EGM = time.time()
+
                 
-                rfc_time = RFCCONSAV.solve(t,sol,par)
+
+                time_invert, time_RFC = RFCCONSAV.solve(t,sol,par)
                 
                 par.time_egm[t] = time.time()-t0_EGM
                 if par.do_print:
                     print(f'   applied RFC  in {par.time_egm[t]:.2f} secs')
 
                 par.time_work[t] = time.time()-t0
-                par.time_rfc[t] = rfc_time
+                par.time_rfc[t] = time_RFC
+                par.time_invert[t] = time_invert
 
             if par.do_print:
                 print(f'solved working problem in {np.sum(par.time_work):.2f} secs')

@@ -8,8 +8,8 @@
 #PBS -l storage=scratch/pv33+gdata/pv33
 #PBS -l wd
 
-module load python3/3.11.0 
+module load python3/3.12.1
 module load openmpi/4.1.5
 
 
-mpiexec -n 1 --map-by ppr:6:numa python3 timingPensions.py 900
+mpiexec -n 24 --map-by ppr:6:numa python3 timingPensions.py draft_v6

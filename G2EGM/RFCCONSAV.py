@@ -1,5 +1,7 @@
 import numpy as np
 from numba import njit
+import os
+
 from RFC.RFC import RFC 
 from RFC.math_funcs import interpolateEGM
 
@@ -121,6 +123,8 @@ def rfc_upper_envelope_inplace(n,m,v,c,b,d,gr_n,gr_m,par,t):
     e_grids_intersect = {}
         
     start = time.time()
+
+    print("Number of raw EGM points..{}.".format(len(nm_raw)))
     
     # clean grids via roof-top cut for periods before T-2 
     if t<par.T-2:
@@ -144,7 +148,7 @@ def rfc_upper_envelope_inplace(n,m,v,c,b,d,gr_n,gr_m,par,t):
         nm_clean = nm_raw
         vf_clean = v_raw
         o_clean = o_raw 
-
+    rfc_time = time.time()-start
     # sort data 
     nm_clean_sort = np.lexsort((nm_clean[:,1], nm_clean[:,0]))
     nm_clean = nm_clean[nm_clean_sort]
@@ -185,7 +189,7 @@ def rfc_upper_envelope_inplace(n,m,v,c,b,d,gr_n,gr_m,par,t):
     #print('interp time: ',time.time()-start1)
 
 
-    rfc_time = time.time()-start
+    
 
     del nm_clean, nm_raw , o_clean, o_raw, v_raw, vf_clean, gr_raw
     gc.collect()
@@ -233,7 +237,7 @@ def invert_ucon(w,wa,wb,par):
 
     Constrained region defined by:
     
-    mu_f = mu_p = 0 since y_f >0 and y_p > m_p
+    mu_f = mu_p = 0 since y_f >0 and p_bar>y_p > m_p
 
     """
 
@@ -242,16 +246,41 @@ def invert_ucon(w,wa,wb,par):
     # i. choices
     c = utility.inv_marg_func(wa,par)
     d = (par.chi*wb)/(wa-wb)-1
-    
-    # ii. states and value
     a = par.grid_a_pd_nd
+    #b = cp.copy(par.grid_b_pd_nd)
+    a_prime  = np.copy(par.grid_a_pd_nd)
+    LL = 0
+    for i in range(c.shape[0]):
+        for j in range(c.shape[1]):
+            if d[i,j] >= par.p_L:
+                d[i,j] = par.p_L
+
+            elif wa[i,j] - wb[i,j]<0 and np.abs(d[i,j])> par.p_L:
+                d[i,j] = par.p_L
+            
+    # ii. states and value
     b = par.grid_b_pd_nd
-    m,n,v = inv_mn_and_v(c,d,a,b,w,par)
+    a_prime = a 
+    wb_prime = np.zeros(w.shape)
+    linear_interp.interp_2d_vec(par.grid_b_pd,par.grid_a_pd,wb,b.ravel(),a_prime.ravel(), wb_prime.ravel())
+
+    m,n,v = inv_mn_and_v(c,d,a_prime,b,w,par)
 
     # iii. upperenvelope and interp to common
-    gr_n_now = wb
+    gr_n_now = wb_prime
     gr_m_now = utility.marg_func(c,par)
 
+
+    # complementarity slackness
+    for i in range(n.shape[0]):
+        for j in range(n.shape[1]):
+            if d[i,j] < 0:
+                m[i,j] = np.nan
+            elif d[i,j]>=0:
+                mu_p =  gr_m_now[i,j] - wb[i,j]*(1+par.chi/(1+d[i,j]))
+                if mu_p>0:
+                    m[i,j] = np.nan
+            
 
     return n,m,v,c,b,d,gr_n_now,gr_m_now
 
@@ -284,6 +313,50 @@ def invert_dcon(w,wa,wb,par):
         for j in range(n.shape[1]):
             mu_p =  gr_m_now[i,j] - wb[i,j]*(1+par.chi) 
             if mu_p<0:
+                m[i,j] = np.nan
+            
+
+    return n,m, v,c,b,d,gr_n_now, gr_m_now
+
+@njit
+def invert_dconBar(w,wa,wb,par):
+    
+    """ 
+
+    Constrained region defined by:
+
+    mu_f = 0, mu_pBar>=0, y_f>0, y_p= m_p 
+    
+    """
+
+    num = 2
+
+    # i. decisions                
+    c = utility.inv_marg_func(wa,par) # implies mu_f = 0
+    
+    d = par.d_dcon + par.p_L
+        
+    # ii. states and value
+    a = par.grid_a_pd_nd
+    b = par.grid_b_pd_nd 
+    
+    m,n,v = inv_mn_and_v(c,d,a,b,w,par)
+   
+    gr_m_now = utility.marg_func(c,par)
+    
+    wb_acon = np.zeros(m.shape)
+    gr_n_now = wb
+
+    # complementary slackness
+    for i in range(n.shape[0]):
+    
+         for j in range(n.shape[1]):
+            mu_p =  gr_m_now[i,j] - wb[i,j]*(1+par.chi/(1+d[i,j]))
+            if mu_p>=0:
+                m[i,j] = np.nan
+            #if n[i,j]<1.5 or m[i,j]<1.5:
+            #    m[i,j] = np.nan
+            if (par.chi*wb[i,j])/(wa[i,j]-wb[i,j])-1>par.p_L:
                 m[i,j] = np.nan
 
     return n,m, v,c,b,d,gr_n_now, gr_m_now
@@ -322,6 +395,11 @@ def invert_acon(w,wa,wb,par):
         
         # iii. choices
         d[:,i_b] = par.chi/(utility.marg_func(c[:,i_b],par)/(wb_acon_float)-1)-1 # ensures mu_p = 0
+
+        for l in range((len(d[:,i_b]))):
+            if d[l,i_b] > par.p_L:
+                d[l,i_b] = par.p_L
+                c[l,i_b] = c[l,i_b]  + d[l,i_b] - par.p_L
                         
         # iv. post-decision states and value function
         b[:,i_b] = par.b_acon[i_b]
@@ -336,17 +414,15 @@ def invert_acon(w,wa,wb,par):
     gr_n_now = wb_acon
     gr_m_now = utility.marg_func(c,par)
 
-    # complementarity slackness
-    for i in range(n.shape[0]):
-       
-       #enforce complementary slackness
-       
+    # complementary slackness
+    for i in range(n.shape[0]):       
        for j in range(n.shape[1]):
             mu_f = gr_m_now[i,j] - wa_acon[i,j]
             if mu_f<0:
                 m[i,j] = np.nan
-                
-
+            if d[i,j] > par.p_L:
+                m[i,j] = np.nan
+            
     # vi. upperenvelope and interp to common
     return n,m, v,c,b,d, gr_n_now, gr_m_now
 
@@ -362,7 +438,7 @@ def invert_con(w,wa,wb,par):
     """
                         
     # i. choices
-    c = par.grid_m_nd
+    c = par.grid_m_nd 
     d = np.zeros(c.shape)
         
     # ii. post-decision states
@@ -385,19 +461,72 @@ def invert_con(w,wa,wb,par):
     n = np.copy(par.grid_n_nd)
     m = np.copy(par.grid_m_nd)
 
-    # complementarity slackness
+    # complementary slackness
     for i in range(n.shape[0]):
         for j in range(n.shape[1]):
-
             mu_a = gr_m_now[i,j] - wa_con[i,j]
+            if d[i,j] < 0:
+                m[i,j] = np.nan
+            
             if mu_a<0:
-                n[i,j] = np.nan
-            mu_f = gr_m_now[i,j] - wa_con[i,j]
-            if mu_f<0:
-                n[i,j] = np.nan
+                m[i,j] = np.nan
+            
+            mu_p = gr_m_now[i,j]  - wb_con[i,j]*(1+par.chi/(1+d[i,j]))
+            if mu_p<0:
+                m[i,j] = np.nan
                 
     return n,m,v,c,b,d,gr_n_now, gr_m_now
 
+@njit
+def invert_conBar(w,wa,wb,par):
+
+    """ 
+
+    Constrained region defined by:
+
+    mu_f >= 0, mu_pBar>=0, y_f=0, y_p=m_p 
+    
+    """
+                        
+    # i. choices
+    c = par.grid_m_nd - par.p_L
+    d = np.zeros(c.shape) + par.p_L
+    #d = np.full(c.shape, par.p_L)
+        
+    # ii. post-decision states
+    a = np.zeros(c.shape)
+    b = par.grid_n_nd  + pens.func(par.p_L,par)
+
+    # iii. post decision value
+    w_con = np.zeros(c.shape)
+    wb_con = np.zeros(c.shape)
+    wa_con = np.zeros(c.shape)
+    
+    linear_interp.interp_2d_vec(par.grid_b_pd,par.grid_a_pd,wa,b.ravel(),a.ravel(),wa_con.ravel())
+    linear_interp.interp_2d_vec(par.grid_b_pd,par.grid_a_pd,w,b.ravel(),a.ravel(),w_con.ravel())
+    linear_interp.interp_2d_vec(par.grid_b_pd,par.grid_a_pd,wb,b.ravel(),a.ravel(),wb_con.ravel())
+
+    # iv. value
+    v = utility.func(c,par) + w_con     
+
+    gr_n_now = wb_con
+    gr_m_now = utility.marg_func(c,par)
+    n = np.copy(par.grid_n_nd)
+    m = np.copy(par.grid_m_nd)
+
+    # complementary slackness
+    for i in range(n.shape[0]):
+        for j in range(n.shape[1]):
+            m[i,j] = np.nan
+            mu_a = gr_m_now[i,j] - wa_con[i,j]
+            if mu_a<0:
+                m[i,j] = np.nan
+            
+            mu_p = gr_m_now[i,j]  - wb_con[i,j]*(1+par.chi/(1+d[i,j]))
+            if mu_p>0:
+                m[i,j] = np.nan
+                
+    return n,m,v,c,b,d,gr_n_now, gr_m_now
 
 
 @njit
@@ -408,9 +537,27 @@ def apply_mask(n, m,valid_mask):
                 n[i, j] = np.nan
                 m[i, j] = np.nan
 
-
 @njit 
+def clean_with_mask(n,m,v,c,b,d, gr_n, gr_m ):
+
+    mask = np.where(np.isnan(n))
+    n = n[~mask]
+    m = m[~mask]
+    v = v[~mask]
+    c = c[~mask]
+    d = d[~mask]
+    gr_n = gr_n[~mask]
+    gr_m = gr_m[~mask]
+    return n,m,v,c,b,d, gr_n, gr_m
+
+@njit
 def combine_invert(w,wa,wb,par):
+
+    """ 
+    Inverts exogenous grid regions and combines admissible inverse points
+    into one set of arrays. 
+    
+    """
 
     n,m,v,c,b,d, gr_n, gr_m = invert_ucon(w,wa,wb,par)
     valid_mask = upperenvelope.compute_valid_only(m,n,c,d,v,par)
@@ -419,31 +566,99 @@ def combine_invert(w,wa,wb,par):
     n_d,m_d,v_d,c_d,b_d,d_d, gr_n_d, gr_m_d = invert_dcon(w,wa,wb,par)
     valid_mask = upperenvelope.compute_valid_only(m_d,n_d,c_d,d_d,v_d,par)
     apply_mask(n_d, m_d,valid_mask)
-    
 
     n_a,m_a,v_a,c_a,b_a,d_a, gr_n_a, gr_m_a = invert_acon(w,wa,wb,par)
-    #n_a[np.where(gr_m_a< wa)]   = np.nan
     valid_mask = upperenvelope.compute_valid_only(m_a,n_a,c_a,d_a,v_a,par)
     apply_mask(n_a, m_a,  valid_mask)
 
     n_c,m_c,v_c,c_c,b_c, d_c, gr_n_c, gr_m_c = invert_con(w,wa,wb,par)
     valid_mask = upperenvelope.compute_valid_only(m_c,n_c,c_c,d_c,v_c,par)
     apply_mask(n_c, m_c, valid_mask)
+    
+    if par.p_L<100:
+        #n_dBar,m_dBar,v_dBar,c_dBar,b_dBar,d_dBar, gr_n_dBar, gr_m_dBar = invert_dconBar(w,wa,wb,par)
+        #valid_mask = upperenvelope.compute_valid_only(m_dBar,n_dBar,c_dBar,d_dBar,v_dBar,par)
+        #apply_mask(n_dBar, m_dBar,valid_mask)
 
-    # Assuming all arrays are defined and are nxm
-    n1 = np.concatenate((n.ravel(), n_d.ravel(), n_a.ravel(), n_c.ravel()), axis=0)
-    m1 = np.concatenate((m.ravel(), m_d.ravel(), m_a.ravel(), m_c.ravel()), axis=0)
-    v1 = np.concatenate((v.ravel(), v_d.ravel(), v_a.ravel(), v_c.ravel()), axis=0)
-    c1 = np.concatenate((c.ravel(), c_d.ravel(), c_a.ravel(), c_c.ravel()), axis=0)
-    d1 = np.concatenate((d.ravel(), d_d.ravel(), d_a.ravel(), d_c.ravel()), axis=0)
-    gr_m1 = np.concatenate((gr_m.ravel(), gr_m_d.ravel(), gr_m_a.ravel(), gr_m_c.ravel()), axis=0)
-    gr_n1 = np.concatenate((gr_n.ravel(), gr_n_d.ravel(), gr_n_a.ravel(), gr_n_c.ravel()), axis=0)
-    b1 = np.concatenate((b.ravel(), b_d.ravel(), b_a.ravel(), b_c.ravel()), axis=0)
+        n_cBar,m_cBar,v_cBar,c_cBar,b_cBar,d_cBar, gr_n_cBar, gr_m_cBar = invert_conBar(w,wa,wb,par)
+        valid_mask = upperenvelope.compute_valid_only(m_cBar,n_cBar,c_cBar,d_cBar,v_cBar,par)
+        apply_mask(n_cBar, m_cBar,valid_mask)
 
-    #valid_mask = upperenvelope.compute_valid_only(m1,n1,c1,d1,v1,par)
-    #apply_mask(n1, m1, valid_mask)
+        n1 = np.concatenate((n.ravel(), n_d.ravel(), n_cBar.ravel(),\
+                                 n_a.ravel(), n_c.ravel()), axis=0)
+        m1 = np.concatenate((m.ravel(), m_d.ravel(),  m_cBar.ravel(),\
+                                 m_a.ravel(), m_c.ravel()), axis=0)
+        v1 = np.concatenate((v.ravel(), v_d.ravel(), v_cBar.ravel(),\
+                                v_a.ravel(), v_c.ravel()), axis=0)
+        c1 = np.concatenate((c.ravel(), c_d.ravel(), c_cBar.ravel(),\
+                                 c_a.ravel(), c_c.ravel()), axis=0)
+        d1 = np.concatenate((d.ravel(), d_d.ravel(),d_cBar.ravel(),\
+                                d_a.ravel(), d_c.ravel()), axis=0)
+        gr_m1 = np.concatenate((gr_m.ravel(), gr_m_d.ravel(),gr_m_cBar.ravel(),\
+                                     gr_m_a.ravel(), gr_m_c.ravel()), axis=0)
+        gr_n1 = np.concatenate((gr_n.ravel(), gr_n_d.ravel(), gr_n_cBar.ravel(),\
+                                    gr_n_a.ravel(), gr_n_c.ravel()), axis=0)
+        b1 = np.concatenate((b.ravel(), b_d.ravel(), b_cBar.ravel(),\
+                                 b_a.ravel(), b_c.ravel()), axis=0)
+    
+    else:
+        n1 = np.concatenate((n.ravel(), n_d.ravel(), n_a.ravel(), n_c.ravel()), axis=0)
+        m1 = np.concatenate((m.ravel(), m_d.ravel(), m_a.ravel(), m_c.ravel()), axis=0)
+        v1 = np.concatenate((v.ravel(), v_d.ravel(), v_a.ravel(), v_c.ravel()), axis=0)
+        c1 = np.concatenate((c.ravel(), c_d.ravel(), c_a.ravel(), c_c.ravel()), axis=0)
+        d1 = np.concatenate((d.ravel(), d_d.ravel(), d_a.ravel(), d_c.ravel()), axis=0)
+        gr_m1 = np.concatenate((gr_m.ravel(), gr_m_d.ravel(), gr_m_a.ravel(), gr_m_c.ravel()), axis=0)
+        gr_n1 = np.concatenate((gr_n.ravel(), gr_n_d.ravel(),gr_n_a.ravel(), gr_n_c.ravel()), axis=0)
+        b1 = np.concatenate((b.ravel(), b_d.ravel(), b_a.ravel(), b_c.ravel()), axis=0)
+
 
     return n1,m1,v1,c1,b1,d1,gr_n1,gr_m1
+
+@njit
+def post_prep(t,sol,par, policies):
+    w = sol.w[t]
+    
+    sol.c[t,:,:] = correct_jumps_gradient_2d(policies[:,:,1],\
+                                                par.grid_m_nd.reshape((par.Nn,par.Nm))[1,:],\
+                                                par.grid_n_nd.reshape((par.Nn,par.Nm))[:,1],par.J_bar)
+    sol.d[t,:,:] = correct_jumps_gradient_2d(policies[:,:,2],\
+                                                par.grid_m_nd.reshape((par.Nn,par.Nm))[1,:],\
+                                            par.grid_n_nd.reshape((par.Nn,par.Nm))[:,1], par.J_bar)
+    
+
+    # replace NaNs in value function wth continuation value
+    b_end = par.grid_n_nd + sol.d[t,:,:] + pens.func(sol.d[t,:,:],par)
+    a_end = par.grid_m_nd - sol.c[t,:,:] - sol.d[t,:,:]
+    w_nxt = np.zeros(sol.c[t,:,:].shape)
+    
+    linear_interp.interp_2d_vec(par.grid_b_pd,par.grid_a_pd,\
+                                w,b_end.ravel(),a_end.ravel(),w_nxt.ravel())
+    
+    continuation_value = w_nxt.reshape((par.Nn,par.Nm))\
+                                +  utility.func(sol.c[t,:,:],par) 
+    
+    for i in range(policies.shape[0]):
+       for j in range(policies.shape[1]):
+            if np.isnan(policies[i, j, 0]):
+                policies[i, j, 0] = continuation_value[i, j]
+
+    holes = np.zeros((par.Nn,par.Nm))
+
+    out_c = sol.c[t,:,:]
+    out_d = sol.d[t,:,:]
+    out_v = policies[:,:,0]
+    
+    for i in range(holes.shape[0]):
+        for j in range(holes.shape[1]):
+            if np.isnan(out_c[i, j]):
+                holes[i, j] = 1
+            if np.isnan(out_d[i, j]):
+                holes[i, j] = 1
+    Iucon = holes == 1
+
+    fill_holes(out_c,out_d,out_v,Iucon,w,1,par)
+
+    return out_c, out_d, out_v
 
 #@njit
 def solve(t,sol,par):
@@ -453,7 +668,13 @@ def solve(t,sol,par):
     wb = sol.wb[t]
 
     # a. invert each segment
+    start = time.time()
     n,m,v,c,b,d,gr_n,gr_m = combine_invert(w,wa,wb,par)
+    time_invert = time.time()-start
+
+    start = time.time()
+    policies, rfc_time, e_grids_clean, e_grids_intersect = rfc_upper_envelope_inplace(n,m,v,c,b,d,gr_n,gr_m,par,t)
+    policies = policies.reshape((par.Nn,par.Nm,3))
 
     if par.save_data:
         e_grid_raw = {}
@@ -465,86 +686,29 @@ def solve(t,sol,par):
         e_grid_raw['gr_n'] = gr_n
         e_grid_raw['gr_m'] = gr_m
 
-    policies, rfc_time, e_grids_clean, e_grids_intersect = rfc_upper_envelope_inplace(n,m,v,c,b,d,gr_n,gr_m,par,t)
-    policies = policies.reshape((par.Nn,par.Nm,3))
-
-    if par.fill_holes:
-
-        """ 
-        Experimental: apply original fill holes method. May not work 
-        since unable to identify segments for a a nan. 
-        
-        """
-        holes = np.zeros((par.Nn,par.Nm))
-
-        # loop through different regions and fill holes
-        out_c = policies[:,:,1] 
-        out_d = policies[:,:,2]
-        out_v = policies[:,:,0]
-
-        # nan vals in c or d are holes
-        holes[np.isnan(out_c)] = 1
-        holes[np.isnan(out_d)] = 1
-
-        a_out = par.grid_m_nd - out_c - out_d
-
-        Icon = (a_out == 0) & (out_d == 0) & (holes == 1)
-        Iucon = (a_out > 0) & (out_d > 0)  & (holes == 1)
-        Iacon = (a_out <= 0) & (out_d > 0)  & (holes == 1)
-        Idcon = (a_out > 0) & (out_d == 0)  & (holes == 1)
-
-        fill_holes(out_c,out_d,out_v,Iucon,w,1,par)
-        fill_holes(out_c,out_d,out_v,Idcon,w,2,par)
-        fill_holes(out_c,out_d,out_v,Iacon,w,3,par)
-
+    
     if par.correct_jumps:
         """ 
         Remove interpolated points between future choice specific policy functions
         by replacing with local extrapolants. 
         
         """
-        #policies[:,:,2][np.isnan(policies[:,:,2])] = 0
-        sol.c[t,:,:] = correct_jumps_gradient_2d(policies[:,:,1],\
-                                                 par.grid_m_nd.reshape((par.Nn,par.Nm))[1,:],\
-                                                 par.grid_n_nd.reshape((par.Nn,par.Nm))[:,1],par.J_bar)
-        sol.d[t,:,:] = correct_jumps_gradient_2d(policies[:,:,2],\
-                                                 par.grid_m_nd.reshape((par.Nn,par.Nm))[1,:],\
-                                                par.grid_n_nd.reshape((par.Nn,par.Nm))[:,1], par.J_bar)
-        #sol.d[t,:,:][sol.d[t,:,:]<1e-10] = 0
-        #sol.d[t,:,:][sol.d[t,:,:]>5] = 0
 
-        # replace NaNs in value function wth continuation value
-        b_end = par.grid_n_nd + sol.d[t,:,:] + pens.func(sol.d[t,:,:],par)
-        a_end = par.grid_m_nd - sol.c[t,:,:] - sol.d[t,:,:]
-        w_nxt = np.zeros(sol.c[t,:,:].shape)
+        policies[:,:,2][np.isnan(policies[:,:,2])] = 0
+        sol.d[t,:,:][sol.d[t,:,:]<1e-10] = 0
+        sol.d[t,:,:][sol.d[t,:,:]>par.p_L] = par.p_L
+        out_c, out_d, out_v = post_prep(t,sol,par, policies)
+
+        sol.d[t,:,:][sol.d[t,:,:]<1e-10] = 0
+        sol.d[t,:,:][sol.d[t,:,:]>par.p_L] = par.p_L
+        sol.c[t,:,:][sol.c[t,:,:]<1e-100] = 1e-100
         
-        linear_interp.interp_2d_vec(par.grid_b_pd,par.grid_a_pd,\
-                                    w,b_end.ravel(),a_end.ravel(),w_nxt.ravel())
-        
-        continuation_value = w_nxt.reshape((par.Nn,par.Nm))\
-                                 +  utility.func(sol.c[t,:,:],par) 
-        policies[:,:,0][np.isnan(policies[:,:,0])] = continuation_value[np.isnan(policies[:,:,0])]
-
-        out_c = sol.c[t,:,:]
-        out_d = sol.d[t,:,:]
-        out_v = policies[:,:,0]
-        
-
-        #holes = np.zeros((par.Nn,par.Nm))
-        #holes[np.isnan(out_c)] = 1
-        #holes[np.isnan(out_d)] = 1
-        #Iucon = holes == 1
-
-        #fill_holes(out_c,out_d,out_v,Iucon,w,1,par)
-
-        #nearest_function_ND = nearestND(par.grid,policies.reshape((par.Nn*par.Nm,3)))
-        #pols_nearest = nearest_function_ND(par.grid).reshape((par.Nn,par.Nm,3))
-        #policies[np.isnan(policies)] = pols_nearest[np.isnan(policies)]
-    
     else:
         sol.c[t,:,:] = policies[:,:,1]
         sol.d[t,:,:] = policies[:,:,2]
-
+    
+    time_RFC = time.time()-start
+    
     sol.inv_v[t,:,:] = - 1.0/policies[:,:,0]
 
     # c. derivatives 
@@ -563,12 +727,12 @@ def solve(t,sol,par):
     vn = wb_now
     sol.inv_vn[t,:,:] = 1.0/vn
 
-    if t == 3 and par.save_data:
-        
+    if t == par.t_save and par.save_data:
+        if not os.path.exists(par.scrpath):
+            os.makedirs(par.scrpath)
         pickle.dump(e_grid_raw, open('{}/e_grid_raw.pkl'.format(par.scrpath), 'wb'))
         pickle.dump(e_grids_clean, open('{}/e_grids_clean.pkl'.format(par.scrpath), 'wb'))
         pickle.dump(e_grids_intersect, open('{}/e_grids_intersect.pkl'.format(par.scrpath), 'wb'))
+        #print("Saved EGM grids to "
 
-    return rfc_time
-
-    
+    return time_invert, rfc_time

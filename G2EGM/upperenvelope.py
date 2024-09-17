@@ -28,6 +28,7 @@ def compute(out_c,out_d,out_v,m,n,c,d,v,num,w,par,valt=np.array([[]])):
             valid[i_b,i_a] &= (~np.isnan(v[i_b,i_a]))
             valid[i_b,i_a] &= c[i_b,i_a] >= -0.50
             valid[i_b,i_a] &= d[i_b,i_a] >= -0.50
+            valid[i_b,i_a] &= d[i_b,i_a] <= par.p_L + 0.1
             valid[i_b,i_a] &= m[i_b,i_a] > -0.1
             valid[i_b,i_a] &= n[i_b,i_a] > -0.1
             valid[i_b,i_a] &= m[i_b,i_a] < par.m_max + 1
@@ -75,10 +76,11 @@ def compute_valid_only(m,n,c,d,v,par,valt=np.array([[]])):
             #valid[i_b,i_a] &= d[i_b,i_a] >= -0.00050
             #valid[i_b,i_a] &= m[i_b,i_a] > -0.01
             #valid[i_b,i_a] &= n[i_b,i_a] > -0.01
-            valid[i_b,i_a] &= m[i_b,i_a] < par.m_max + .1
-            valid[i_b,i_a] &= n[i_b,i_a] < par.n_max + .1
-            valid[i_b,i_a] &= c[i_b,i_a] > 0
-            valid[i_b,i_a] &= d[i_b,i_a] >= -0.000050
+            valid[i_b,i_a] &= m[i_b,i_a] < par.m_max + 1
+            valid[i_b,i_a] &= n[i_b,i_a] < par.n_max +  1
+            valid[i_b,i_a] &= c[i_b,i_a] > -0.0000050 
+            valid[i_b,i_a] &= d[i_b,i_a] >= -0.0000050 
+            valid[i_b,i_a] &= d[i_b,i_a] <= par.p_L + 0.1
             valid[i_b,i_a] &= m[i_b,i_a] > -0.01
             valid[i_b,i_a] &= n[i_b,i_a] > -0.01
 
