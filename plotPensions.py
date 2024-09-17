@@ -41,7 +41,7 @@ if __name__ == '__main__':
     k2 = 1              # Neighbors of uniform grid to construct triangulation for interpolation
     segplot_t = 3       # t for plotting constrained regions
     do_print = True
-    p_L = 1  # Upper bound for pension contributions
+    p_L = 2  # Upper bound for pension contributions
     
     # File paths for saving plots and data
     scrpath = '/scratch/tp66/dcdp/data/' # drive where raw egmgrids are saved 
