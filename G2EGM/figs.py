@@ -14,6 +14,8 @@ color1 = np.array([3.0/255.0,103.0/255.0,166.0/255.0])
 color2 = np.array([242.0/255.0,62.0/255.0,46.0/255.0])
 color3 = np.array([3.0/255.0,166.0/255.0,166.0/255.0])
 color4 = np.array([242.0/255.0,131.0/255.0,68.0/255.0])
+color5 = np.array([242.0/255.0,242.0/255.0,68.0/255.0])
+color6 = np.array([242.0/255.0,68.0/255.0,68.0/255.0])
 
 sns.set(style="white", rc={
         "font.size": 11, "axes.titlesize": 11, "axes.labelsize": 11})
@@ -218,44 +220,45 @@ def euler_hist(modelDict,Nm, plot_path):
 
 def Kregions(model_RFC, egrids_raw, egrids_clean, e_grids_intersect, plot_path, t):
 
-    # a. color palette
-    palette = sns.color_palette("cubehelix", 5)
+    # 1. color palette
+    palette = sns.color_palette("cubehelix",6)
     color1 = palette[0]
     color2 = palette[1]
     color3 = palette[2]
     color4 = palette[3]
     color5 = palette[4]
+    color6 = palette[5]
 
-    # a. unpack
+    # 2. model
     par = model_RFC.par
     sol = model_RFC.sol
 
-    # b. settings
+    # 3. Figure settings
     fig_max_m = 5
     fig_max_n = 5
 
-    # c. variables
+    # 4. Interpolated policy 
     a = par.grid_m_nd - sol.c[t] - sol.d[t]
     d = np.fmax(sol.d[t],0)
     m = par.grid_m_nd
     n = par.grid_n_nd
     
-
-
-
-    # d. indicators
+    # 4.a. indicators
     IS = a < 1e-7
     a[IS] = 0
     IS = (m < fig_max_m) & (n < fig_max_n)
+    
+    # Interpolated policy functions
     IconS = (a  <= 1e-10) & (d <= 1e-10) & (IS == 1)
+    IconBarS = (a  <= 1e-10) & (d  >= par.p_L) & (IS == 1)
     IuconS = (a > 0) & (d > 0) & (IS == 1)
-    IaconS = (a  <= 1e-7) & (d > 0) & (IS == 1)
+    IaconS = (a  <= 1e-7) & (d <  par.p_L) & (IS == 1) & (d >  0)
     IdconS = (a > 0) & (d  <= 1e-10) & (IS == 1)
+    IdconBarS = (a > 0)  & (IS == 1)& (d  >= par.p_L)
 
-    # e. figure
-    # Scatter plot 2 plots 
+    # 4.b. figure
+    
     fig = plt.figure(figsize=(10,5))
-
     # Create the first subplot in the first column
     ax1 = fig.add_subplot(121)  # 121 means 1 row, 2 columns, first plot
     ax1.scatter(m[IconS], n[IconS], d[IconS], color=color3)
@@ -264,17 +267,21 @@ def Kregions(model_RFC, egrids_raw, egrids_clean, e_grids_intersect, plot_path, 
 
     marker2 = '.'
 
+    
+    # plot LHS interpolated policy 
+    if IconS.sum() > 0: ax1.scatter(m[IconS],n[IconS],s=4,color=color1,label='dcon')
+    if IaconS.sum() > 0: ax1.scatter(m[IaconS],n[IaconS],s=4,color=color2,label='acon')
+    if IconBarS.sum() > 0: ax1.scatter(m[IconBarS],n[IconBarS],s=4,color=color6,label='uconl')
+    if IdconS.sum() > 0: ax1.scatter(m[IdconS],n[IdconS],s=4,color=color3,label='con')
+    if IuconS.sum() > 0: ax1.scatter(m[IuconS],n[IuconS],s=4,color=color4,label='ucon')
+    if IdconBarS.sum() > 0: ax1.scatter(m[IdconBarS],n[IdconBarS],s=4,color=color5,label='cap')
+
+    # region labels 
     ax1.text(4, 4, 'acon', color='black', bbox=dict(facecolor='white', edgecolor='black', boxstyle='square,pad=0.1'))
-    ax1.text(0.3, 1.05, 'dcon', color='black', bbox=dict(facecolor='white', edgecolor='black', boxstyle='square,pad=0.1'))
-    ax1.text(1, 1.1, 'con', color='black', bbox=dict(facecolor='white', edgecolor='black', boxstyle='square,pad=0.1'))
+    ax1.text(0.3, 1.05, 'con', color='black', bbox=dict(facecolor='white', edgecolor='black', boxstyle='square,pad=0.1'))
+    ax1.text(1, 1.1, 'dcon', color='black', bbox=dict(facecolor='white', edgecolor='black', boxstyle='square,pad=0.1'))
     ax1.text(2.1, 1.34, 'ucon', color='black', bbox=dict(facecolor='white', edgecolor='black', boxstyle='square,pad=0.1'))
     ax1.set_title('Endogenous grid')
-
-    
-    if IconS.sum() > 0: ax1.scatter(m[IconS],n[IconS],s=4,color=color1,label='con')
-    if IaconS.sum() > 0: ax1.scatter(m[IaconS],n[IaconS],s=4,color=color2,label='acon')
-    if IdconS.sum() > 0: ax1.scatter(m[IdconS],n[IdconS],s=4,color=color3,label='dcon')
-    if IuconS.sum() > 0: ax1.scatter(m[IuconS],n[IuconS],s=4,color=color4,label='ucon')\
     
     try:
         m_intersect = e_grids_intersect['m']
@@ -282,7 +289,8 @@ def Kregions(model_RFC, egrids_raw, egrids_clean, e_grids_intersect, plot_path, 
         ax1.scatter(m_intersect,n_intersect,s=4,color='black', marker ='x', alpha=0.5, label = 'intersect')
     except:
         pass
-
+    
+    #5. Raw RHS grid 
     a = model_RFC.par.grid_a_pd_nd
     b = model_RFC.par.grid_b_pd_nd
     
@@ -307,8 +315,6 @@ def Kregions(model_RFC, egrids_raw, egrids_clean, e_grids_intersect, plot_path, 
 
     c_clean = o_clean[:,0]
     d_clean = o_clean[:,2]
-    #gr_raw = gr_raw[~mask_nan1]
-    #b_raw = egrids_raw['b']
     a_raw = m_raw - c_raw - d_raw
     a_clean = m_clean - c_clean - d_clean
 
@@ -322,10 +328,14 @@ def Kregions(model_RFC, egrids_raw, egrids_clean, e_grids_intersect, plot_path, 
 
     I = (m_raw < fig_max_m) & (n_raw < fig_max_n)
     I = (b_raw < 8) & (c_raw < 2) & (a_raw < 5)
-    Icon = (a_raw == 0) & (d_raw == 0) & (I == 1)
-    Iucon = (a_raw > 0) & (d_raw > 0) & (I == 1)
-    Iacon = (a_raw <= 0) & (d_raw > 0) & (I == 1)
+    
+    # Indicators for the raw grid points 
+    Icon = (a_raw <= 1e-10) & (d_raw == 0) & (I == 1)
+    IconBar = (a_raw <= 1e-10) & (d_raw >= par.p_L) & (I == 1)
+    Iucon = (a_raw > 0) & (d_raw < par.p_L) & (I == 1)
+    Iacon = (a_raw <= 1e-10) & (d_raw < par.p_L) & (I == 1) &(d_raw >0)
     Idcon = (a_raw > 0) & (d_raw == 0) & (I == 1)
+    IdBarcon = (a_raw > 0)  & (I == 1)& (d_raw >= par.p_L)
 
     # do a scatter plot of the clean grid
     # d. indicators
@@ -334,39 +344,50 @@ def Kregions(model_RFC, egrids_raw, egrids_clean, e_grids_intersect, plot_path, 
     I = (m_clean < fig_max_m) & (n_clean < fig_max_n)
     I = (b_clean < 8) & (c_clean < 2) & (a_clean < 5)
 
+    # Indicators for the clean grid points
     Iconc = (a_clean  <= 1e-10) & (d_clean  <= 1e-10) & (I == 1)
+    IconcBar = (a_clean  <= 1e-10) & (d_clean  >= par.p_L) & (I == 1)
     Iuconc = (a_clean > 0) & (d_clean > 0) & (I == 1)
-    Iaconc = (a_clean <= 0) & (d_clean > 0) & (I == 1)
+    Iaconc = (a_clean <= 0) & (d_clean < par.p_L) & (I == 1)
     Idconc = (a_clean > 0) & (d_clean  <= 1e-10) & (I == 1)
+    IdBarconc = (a_clean > 0)  & (I == 1)& (d_clean  >= par.p_L) 
 
     ax = fig.add_subplot(122)  # 122 means 1 row, 2 columns, second plot
 
-    if Iacon.sum() > 0: ax.scatter(b_raw[Iacon],c_raw[Iacon],s=6,color='black', marker ='.', alpha=0.5, label = 'sub-optimal')
-    if Idcon.sum() > 0: ax.scatter(b_raw[Idcon],c_raw[Idcon],s=4,color='black', marker ='.', alpha=0.5)
-    if Iucon.sum() > 0: ax.scatter(b_raw[Iucon],c_raw[Iucon],s=4, color='black', marker ='.', alpha=0.5)
-    if Icon.sum() > 0: ax.scatter(b_raw[Icon],c_raw[Icon],s=4,color='black', marker ='.', alpha=0.5)
-
+    if Iacon.sum() > 0: ax.scatter(b_raw[Iacon],c_raw[Iacon],s=6,color='red', marker ='.', alpha=0.5, label = 'sub-optimal')
+    if Idcon.sum() > 0: ax.scatter(b_raw[Idcon],c_raw[Idcon],s=4,color='red', marker ='.', alpha=0.5)
+    if Iucon.sum() > 0: ax.scatter(b_raw[Iucon],c_raw[Iucon],s=4, color='red', marker ='.', alpha=0.5)
+    if Icon.sum() > 0: ax.scatter(b_raw[Icon],c_raw[Icon],s=4,color='red', marker ='.', alpha=0.5)
+    if IdBarcon.sum() > 0: ax.scatter(b_raw[IdBarcon],c_raw[IdBarcon],s=4,color='red', marker ='.', alpha=0.5)
+    if IconBar.sum() > 0: ax.scatter(b_raw[IconBar],c_raw[IconBar],s=4,color='red', marker ='.', alpha=0.5)
+    
+    # plot clean exogenous grid
     if Iaconc.sum() > 0: 
         scatter = ax.scatter(b_clean[Iaconc],c_clean[Iaconc],s=4,color=color2, marker = marker2, label = 'acon')
         centroid = (b_clean[Iaconc].mean(), c_clean[Iaconc].mean())
 
     if Iconc.sum() > 0: 
-        scatter = ax.scatter(b_clean[Iconc],c_clean[Iconc],s=4,color=color1, marker = marker2, label = 'con')
+        scatter = ax.scatter(b_clean[Iconc],c_clean[Iconc],s=4,color=color1, marker = marker2, label = 'dcon')
         centroid = (b_clean[Iconc].mean(), c_clean[Iconc].mean())
         
     if Idconc.sum() > 0: 
-        scatter = ax.scatter(b_clean[Idconc],c_clean[Idconc],s=4,color=color3, marker = marker2, label = 'dcon')
+        scatter = ax.scatter(b_clean[Idconc],c_clean[Idconc],s=4,color=color3, marker = marker2, label = 'con')
         centroid = (b_clean[Idconc].mean(), c_clean[Idconc].mean())
         
     if Iuconc.sum() > 0: 
         scatter = ax.scatter(b_clean[Iuconc],c_clean[Iuconc],s=4, color=color4, marker = marker2, label = 'ucon')
         centroid = (b_clean[Iuconc].mean(), c_clean[Iuconc].mean())
 
+    if IdBarconc.sum() > 0: 
+        scatter = ax.scatter(b_clean[IdBarconc],c_clean[IdBarconc],s=4, color=color5, marker = marker2, label = 'cap')
+    
+    if IconcBar.sum() > 0: ax.scatter(b_clean[IconcBar],c_clean[IconcBar],s=4,color=color6, alpha=0.5)
 
+    # region lables 
     plt.text(6, 1.75, 'acon', color='black', bbox=dict(facecolor='white', edgecolor='black', boxstyle='square,pad=0.1'))
     plt.text(3.35, 1.65, 'sub-opt', color='black', bbox=dict(facecolor='white', edgecolor='black', boxstyle='square,pad=0.1'))
-    plt.text(2, 1.05, 'con', color='black', bbox=dict(facecolor='white', edgecolor='black', boxstyle='square,pad=0.1'))
-    plt.text(2, 0.3, 'dcon', color='black', bbox=dict(facecolor='white', edgecolor='black', boxstyle='square,pad=0.1'))
+    plt.text(2, 1.05, 'dcon', color='black', bbox=dict(facecolor='white', edgecolor='black', boxstyle='square,pad=0.1'))
+    plt.text(2, 0.3, 'con', color='black', bbox=dict(facecolor='white', edgecolor='black', boxstyle='square,pad=0.1'))
     plt.text(2.1, 1.34, 'ucon', color='black', bbox=dict(facecolor='white', edgecolor='black', boxstyle='square,pad=0.1'))
 
     ax.set_yticks([0,1,2])
@@ -375,6 +396,6 @@ def Kregions(model_RFC, egrids_raw, egrids_clean, e_grids_intersect, plot_path, 
 
     ax.set_title('Exogenous grid')
     #fig.legend(loc='upper center', bbox_to_anchor=(0.5, 0.05), ncol=4)
-    plt.savefig('{}/regions_t_{}.png'.format(plot_path,t))
+    plt.savefig('{}/regions_t_{}_6reg.png'.format(plot_path,t))
 
     return None

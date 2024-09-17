@@ -8,7 +8,7 @@ from pykdtree.kdtree import KDTree as KDTree1
 
 
 # Define interpolation wrapper 
-def interpolateEGM(x, z, grid,t, nearest_nans = True, switch_premergeT= 5):
+def interpolateEGM(x, z, grid,t, nearest_nans = True, switch_premergeT= 4):
 
     z = z.reshape((z.shape[0], -1))
 
