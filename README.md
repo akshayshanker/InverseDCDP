@@ -26,9 +26,9 @@ python3 plotPension.py
 
 Additional constraint upper-bound on pension deposits and six constrained regions (50\% increase in constrained regions).
 
-Under G2EGM, number of total interpolants over which to calculate grid points is now six, leading to 50% increase in time. 
+Under G2EGM, number of total interpolants over which to calculate upper envelople is now six -- a seperate interpolant and endogenous grid for each constrained region -- leading to 50% increase in time. 
 
-Using Theorem 1 to eliminate sub-optimal points, the number of grid points in the six region case can be reduced to be approximately equal to the number of points in the four region case; this is because in the RFC implmentation, the optimal endogenous grid points cover approximately the same measure in the endogenous grid space. 
+Using Theorem 1 to eliminate sub-optimal points that violate complementary slackness *in the exogenous grid*, the number of grid points in the six region case can be reduced to be approximately equal to the number of points in the four region case; this is because in the RFC implmentation, the optimal endogenous grid points cover approximately the same area in the endogenous grid space. 
 
 |                     | RFC+ Delaunay | G2EGM      |
 |---------------------|---------------|------------|
