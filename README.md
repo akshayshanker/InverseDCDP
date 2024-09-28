@@ -5,7 +5,7 @@ We develop a general inverse Euler equation method to efficiently solve any mult
 
 ## Benchmark application: 2D pension saving and retirement by Dreudhal and Jorgensen (2017)
 
-### Problem with four constraint regions 
+### Four constrained regions 
 
 With four constraints regions as in Dreudhal and Jorgensen (2017). 
 
@@ -26,7 +26,7 @@ python3 plotPension.py
 
 </center>
 
-### Problem with six constraint regions 
+### Six constrained regions 
 
 Additional constraint upper-bound on pension deposits and six constrained regions (50\% increase in constrained regions).
 
