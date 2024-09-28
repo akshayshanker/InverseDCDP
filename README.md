@@ -55,7 +55,7 @@ Using Theorem 1 to eliminate sub-optimal points that violate complementary slack
 
 ### Acknowledgements
 
-This repository includes code from the G2EGM module, originally developed in relation to Druedhal and Jorgensen (2017), which is available under the MIT License. The original G2EGM code has been adapted in this project to:
+This repository includes code from the G2EGM module, originally developed by Druedhal and Jorgensen (2017), which is available under the MIT License. The original G2EGM code has been adapted in this project to:
 
 1. Invert the Euler equation according to the necessary conditions described in Dobrescu and Shanker (2024).
 2. Implement the roof-top cut algorithm for comparison with G2EGM upper-envelope algorithm.
