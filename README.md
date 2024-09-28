@@ -1,6 +1,8 @@
-# Using inverse Euler equations to solve multidimensional discrete-continuous dynamic models: A general method
+# Using Inverse Euler Equations to Solve Multidimensional Discrete-continuous Dynamic Models: A General Method
 
-Repository for `Using inverse Euler equations to solve multidimensional discrete-continuous dynamic models: A general method'  by Dobrescu and Shanker. 
+Repository for `Using Inverse Euler Equations to Solve Multidimensional Discrete-continuous Dynamic Models: A General Method'  by Dobrescu and Shanker. 
+
+Contains simple and extended versions of the roof-top cut (RFC) algorithm and applications which implement the paper's theoretical results. 
 
 ## Abstract
 
