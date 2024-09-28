@@ -2,7 +2,7 @@
 
 Repository for `Using Inverse Euler Equations to Solve Multidimensional Discrete-continuous Dynamic Models: A General Method'  by Dobrescu and Shanker. 
 
-Contains simple and extended versions of the roof-top cut (RFC) algorithm and applications which implement the paper's theoretical results. 
+Contains simple and extended versions of the roof-top cut (RFC) algorithm and applications which implement the paper's results concerning inverse constrained Euler equations. 
 
 ## Abstract
 
