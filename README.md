@@ -80,7 +80,7 @@ We gratefully acknowledge the [G2EGM](https://github.com/NumEconCopenhagen/Consu
 |-----------------------------|--------|--------|
 | **Avg. time (sec.) per iter.**| 5.06 | 7.59 |
 | **Euler errors**            |        |        |
-| **All (average)**  | -2.088 | 2.860 |
+| **All (average)**  | -2.088 | -1.49|
 | **5th percentile** | -5.958 | -3.427 |
 | **95th percentile** | -0.493 | -0.402 |
 | **Median** | -0.991 | -0.995 |

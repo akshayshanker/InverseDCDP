@@ -312,7 +312,7 @@ if __name__ == "__main__":
 						 alpha=0.12,
 						 delta=0,
 						 Pi=((0.2, 0.8), (0.8, 0.2)),
-						 z_vals=(1, 0.15),
+						 z_vals=(1, 0.25),
 						 b=1e-10,
 						 grid_max_A=15.0,
 						 grid_max_WE=70.0,
@@ -326,7 +326,7 @@ if __name__ == "__main__":
 						 K=1.3,
 						 tol_bel=1e-09,
 						 m_bar=1.0001,
-						 theta=np.exp(0.3), t0 =50, root_eps=3e-1, stat= False)
+						 theta=np.exp(0.3), t0 =50, root_eps=1e-1, stat= False)
 	
 	# unpack the Bellman operator and Solve the model using Bellman iteration
 	#iterVFI, iterEGM, condition_V, NEGM = Operator_Factory(cp)
@@ -394,6 +394,5 @@ if __name__ == "__main__":
 	# 5. Save to file
 	with open("table_housing.tex", "w") as f:
 		f.writelines(lines)
-
 
 
