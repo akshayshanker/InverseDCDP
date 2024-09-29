@@ -344,7 +344,7 @@ if __name__ == "__main__":
 	plot_pols(cp,EGMRes, NEGMRes, 58, [100,150,200])
 
 	# 2.b. plot of adjuster endog. grids 
-	plot_grids(EGMRes,cp_plot,term_t = 57)
+	plot_grids(EGMRes,cp,term_t = 57)
 		 
 	# 3. Euler errors
 	eulerNEGM = euler_housing(NEGMRes, cp)
