@@ -6,7 +6,7 @@ This repository contains the code for the paper *Using Inverse Euler Equations t
 
 The repository includes:
 
-- `RFC.RFCSimple`: The roof-top cut (RFC) algorithm that searches for sub-optimal points by examining **each** neighboring point.
+- `RFC.RFCSimple`: The roof-top cut (RFC) algorithm that searches for sub-optimal points by examining **each** EGM grid point's neighboring points.
 - `RFC.RFC`: An optimized version of the RFC algorithm that focuses on **likely regions** where sub-optimal points may occur, potentially reducing runtime when the number of points is exponentially large.
 - Applications that implement the results from the paper on inverse constrained Euler equations.
 
