@@ -69,4 +69,4 @@ In our project, the [Druedhal and Jorgensen (2017)](https://www.sciencedirect.co
 1. Invert the Euler equation according to the necessary conditions described in Dobrescu and Shanker (2024).
 2. Implement the rooftop-cut algorithm for comparison with the G2EGM upper-envelope algorithm.
 
-We gratefully acknowledge the [G2EGM](https://github.com/NumEconCopenhagen/ConsumptionSavingNotebooks) modules developed by Druedhal, with modifications for this project noted in the corresponding code files.
+We gratefully acknowledge the [G2EGM](https://github.com/NumEconCopenhagen/ConsumptionSavingNotebooks) modules developed by Druedhal and Jorgensen (2017), with modifications for this project noted in the corresponding code files.
