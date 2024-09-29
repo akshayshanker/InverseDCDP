@@ -75,6 +75,10 @@ We gratefully acknowledge the [G2EGM](https://github.com/NumEconCopenhagen/Consu
 
 ## Application 2: Housing investments with adjustment frictions 
 
+```bash
+python3 housing_plot.py
+```
+
 
 |                             | RFC + Euler Inverse     | NEGM   |
 |-----------------------------|--------|--------|
