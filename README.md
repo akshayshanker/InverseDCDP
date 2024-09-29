@@ -38,7 +38,7 @@ The RFC implementation also removes points that do not satisfy complementary sla
 
 |                   | RFC+ Delaunay | G2EGM      |
 |-------------------|---------------|------------|
-| **Avg. time (sec.) per iter.**| 2.61          | 2.64       |
+| **Total time (min.).**| 2.61          | 2.64       |
 | **Euler errors**   |               |            |
 | **All (average)**  | -6.660        | -6.572     |
 | **5th percentile** | -7.772        | -7.631     |
@@ -55,7 +55,7 @@ By applying Theorem 1 to eliminate sub-optimal points that violate complementary
 
 |                     | RFC+ Delaunay | G2EGM      |
 |---------------------|---------------|------------|
-| **Avg. time (sec.) per iter.**| 2.32          | 3.73       |
+| **Total time (min.).**| 2.32          | 3.73       |
 | **Euler errors**     |               |            |
 | **All (average)**    | -6.542        | -5.872     |
 | **5th percentile**   | -7.855        | -7.593     |
@@ -76,7 +76,7 @@ We gratefully acknowledge the [G2EGM](https://github.com/NumEconCopenhagen/Consu
 ## Application 2: Housing investments with adjustment frictions 
 
 
-|                             | Euler Inverse + RFC    | NEGM   |
+|                             | RFC + Euler Inverse     | NEGM   |
 |-----------------------------|--------|--------|
 | **Avg. time (sec.) per iter.**| 5.06 | 7.59 |
 | **Euler errors**            |        |        |
