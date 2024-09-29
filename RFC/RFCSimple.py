@@ -73,5 +73,6 @@ def rfc(M, gradM, Qval, sigma, J_bar, radius, k):
     tree = KDTree(M)
     dd, closest_indices = tree.query(M, k)
     closest_indices = closest_indices[:, 1:]  # Keep only strict neighbours
+    closest_indices[closest_indices>=M.shape[0]] = M.shape[0] - 1  # Avoid out of bounds
 
-    return _rfc_vectorized(M, gradM, Qval, sigma, J_bar, radius, closest_indices, dd, k)
+    return _rfc_vectorized(M, gradM, Qval, sigma[:,[0]], J_bar, radius, closest_indices, dd, k)

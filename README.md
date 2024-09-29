@@ -1,8 +1,11 @@
 # Using Inverse Euler Equations to Solve Multidimensional Discrete-continuous Dynamic Models: A General Method
 
-Repository for `Using Inverse Euler Equations to Solve Multidimensional Discrete-continuous Dynamic Models: A General Method'  by Dobrescu and Shanker. 
+Repository for `Using Inverse Euler Equations to Solve Multidimensional Discrete-continuous Dynamic Models: A General Method' by Isabella Dobrescu and Akshay Shanker. 
 
-Contains simple and extended versions of the roof-top cut (RFC) algorithm and applications which implement the paper's results concerning inverse constrained Euler equations. 
+The repo. contains:
+
+- A simple and extended version of the roof-top cut (RFC) algorithm.  
+- Applications which implement the paper's results on inverse constrained Euler equations. 
 
 ## Abstract
 
@@ -10,13 +13,13 @@ We develop a general inverse Euler equation method to efficiently solve any mult
 
 ## Application 1: 2D pension saving and retirement choice model by Dreudhal and Jorgensen (2017)
 
-### Four constrained regions 
-
-With four constraints regions as in Dreudhal and Jorgensen (2017). 
-
 ```
 python3 plotPension.py
 ``` 
+
+### Four constrained regions 
+
+With four constraints regions as in Dreudhal and Jorgensen (2017). 
 
 <center>
 
@@ -33,7 +36,7 @@ python3 plotPension.py
 
 ### Six constrained regions 
 
-Additional constraint upper-bound on pension deposits and six constrained regions (50\% increase in constrained regions).
+Additional constraint upper-bound on pension deposits, which leads to six constrained regions (50\% increase in constrained regions).
 
 Under G2EGM, number of total interpolants over which to calculate grid points is now six, leading to 50% increase in time. 
 
@@ -55,7 +58,7 @@ Using Theorem 1 to eliminate sub-optimal points that violate complementary slack
 
 ### Acknowledgements
 
-This repository includes code from the G2EGM module, originally developed by Druedhal and Jorgensen (2017), which is available under the MIT License. The original G2EGM code has been adapted in this project to:
+RFC and the paper's results are applied to an implementation of the pension and retirement choice example originally developed by Druedhal and Jorgensen (2017), which is available under the MIT License. The original G2EGM code has been adapted in this project to:
 
 1. Invert the Euler equation according to the necessary conditions described in Dobrescu and Shanker (2024).
 2. Implement the roof-top cut algorithm for comparison with G2EGM upper-envelope algorithm.
