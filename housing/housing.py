@@ -285,14 +285,6 @@ def Operator_Factory(cp):
                                                           bounds=bnds_nadj_2,
                                                           args=args_nadj_2,
                                                           tol_x=1e-10)[0][0]
-
-            #obj_x_prime_noadj_zero = obj_noadj_scalr(b, w_2, h_prime, z, i_z, V,R, R_H,chi,t)
-
-            # if obj_x_prime_noadj_zero> x_prime_nadj_star_1:
-            #	x_prime_nadj_star = b
-            # else:
-            #	x_prime_nadj_star = x_prime_nadj_star_1
-
             a_prime = x_prime_nadj_star_1
 
             point = np.array([a_prime, h_prime])
@@ -440,12 +432,6 @@ def Operator_Factory(cp):
             a_prime_adj_star_1 = qe.optimize.nelder_mead(
                 obj_noadj, x0_nadj_2, bnds_nadj_2, args=args_nadj_1)[0][0]
 
-            #obj_at_a_prime_adj_star_zero  = obj_noadj_scalr(b, w_adj_1, h_prime_adj_star, z, i_z, V,R, R_H,chi,t)
-
-            # if obj_at_a_prime_adj_star_zero> a_prime_adj_star_2:
-            #	a_prime_adj_star_1 = b
-            # else:
-            #	a_prime_adj_star_1 = a_prime_adj_star_2
 
             consumption_adj = R * a + R_H * h * (1 - delta)\
                 + y_func(t, z)\
@@ -628,8 +614,6 @@ def Operator_Factory(cp):
                                          point_at_amin, xto.LINEAR)
 
             c_at_amin = du_c_inv((Ud_prime_h_val + du_h(h_prime)) / (1 + tau))
-
-            # if du_c(c_at_amin)>= Ud_prime_a_val:
             a_prime_points[-1] = b
             egm_wealth_min = c_at_amin + b + h_prime * (1 + tau)
             e_grid_points[-1] = egm_wealth_min
@@ -671,9 +655,6 @@ def Operator_Factory(cp):
 
         """
 
-        #endog_grid_unrefined = np.ones(shape)
-        #vf_unrefined = np.ones(shape)
-        #c_unrefined = np.ones(shape)
         endog_grid_unrefined = np.ones((len(z_vals), int(len(asset_grid_A)*2), len(asset_grid_H)))
         vf_unrefined = np.ones((len(z_vals), int(len(asset_grid_A)*2), len(asset_grid_H)))
         c_unrefined = np.ones((len(z_vals), int(len(asset_grid_A)*2), len(asset_grid_H)))
@@ -765,25 +746,7 @@ def Operator_Factory(cp):
                     = endog_grid_unrefined[index_z, :, index_h_today]
                 c_unrefined_points = c_unrefined[index_z, :, index_h_today]
                 dela = np.zeros(len(c_unrefined_points))
-                #print(c_unrefined_points)
 
-                #admissable = np.where(endog_grid_unrefined_points<200)
-                #endog_grid_unrefined_points = endog_grid_unrefined_points[admissable]
-                #vf_unrefined_points = vf_unrefined_points[admissable]
-                #c_unrefined_points = c_unrefined_points[admissable] 
-                #asset_grid_AC_unique = asset_grid_AC[admissable]
-                #print(len(endog_grid_unrefined_points))
-
-                # get only unique points
-                #print(len(endog_grid_unrefined_points))
-                #print(len(vf_unrefined_points))
-                #print(endog_grid_unrefined_points)
-                #no_nans = ~np.isnan(endog_grid_unrefined_points)
-                #endog_grid_unrefined_points = endog_grid_unrefined_points[no_nans]
-                #vf_unrefined_points = vf_unrefined_points[no_nans]
-                #c_unrefined_points = c_unrefined_points[no_nans]
-                #asset_grid_AC_unique1 = asset_grid_AC[no_nans]
-                #gr_raw = np.array([du_c(c_unrefined_points)]).T
                 
                 uniqueIds = uniqueEG(endog_grid_unrefined_points, vf_unrefined_points)
                 endog_grid_unrefined_points = endog_grid_unrefined_points[uniqueIds]
@@ -792,11 +755,6 @@ def Operator_Factory(cp):
                 asset_grid_AC_unique = asset_grid_AC[uniqueIds]
                 gr_raw = np.array([du_c(c_unrefined_points)]).T
 
-                #e_grid_cean, vf_clean, c_clean, a_prime_clean, dela\
-                #    = FUES(endog_grid_unrefined_points, vf_unrefined_points,
-                #           c_unrefined_points, asset_grid_AC_unique,gr_raw, dela,b, m_bar=m_bar)
-
-                #e_grid_cean, vf_clean, c_clean, a_prime_clean, dela = FUES(endog_grid_unrefined_points, vf_unrefined_points, c_unrefined_points, asset_grid_AC_unique,c_unrefined_points, b=1e-10, m_bar=m_bar, endog_mbar = False)
                 
                 v_raw = np.array([vf_unrefined_points]).T
                 sigma_raw= np.column_stack((c_unrefined_points,asset_grid_AC_unique))
@@ -807,7 +765,6 @@ def Operator_Factory(cp):
                 sub_points, tngv, closest_indices = rfc(M_raw,gr_raw,v_raw,sigma_raw, J_bar = 1.001, radius = 0.5, k =20)
                 
                 
-                #print(M_clean.shape)
                 mask = np.ones(M_raw.shape[0] ,dtype=bool)
                 mask[sub_points] = False
                 e_grid_clean = M_raw[mask][:,0]
@@ -821,22 +778,6 @@ def Operator_Factory(cp):
                 c_clean = c_clean[sortindex]
                 a_prime_clean = a_prime_clean[sortindex]
 
-                # remove point if policy function remains flat
-
-                
-
-
-
-                #vf_clean = v_clean[:,0]
-                #c_clean = sigma_clean[:,0]
-                #a_prime_clean = sigma_clean[:,1]
-                #a_prime_clean = sigma_clean[:,1]
-
-
-                #Rfc_intersect_interp()
-                #print(c_unrefined_points)
-                # print(endog_grid_unrefined_points)
-                #a_under_bar = min(e_grid_cean)
 
                 new_a_prime_refined[index_z, :, index_h_today]\
                     = interp_as(e_grid_clean, a_prime_clean, asset_grid_A)
@@ -847,24 +788,6 @@ def Operator_Factory(cp):
 
                 new_a_prime_refined[index_z, :, index_h_today][np.where(
                     new_a_prime_refined[index_z, :, index_h_today] < b)] = b
-
-                """ 
-                for i_a in range(len(asset_grid_A)):
-                    if asset_grid_A[i_a] < a_under_bar:
-                        new_a_prime_refined[index_z, i_a, index_h_today] = b
-                        point = np.array(
-                            [b, asset_grid_H[index_h_today] * (1 - delta)])
-                        c = asset_grid_A[i_a] - b
-                        v_at_amin = u(c,
-                                      asset_grid_H[index_h_today] * (1 - delta),
-                                      0) + beta * eval_linear(UGgrid_all,
-                                                              V_prime[index_z,
-                                                                      :],
-                                                              point,
-                                                              xto.NEAREST)
-                        new_v_refined[index_z, i_a, index_h_today] = v_at_amin
-                        new_c_refined[index_z, i_a, index_h_today] = c
-                for index_a in range(len(asset_grid_A)):"""
 
         return new_a_prime_refined, new_c_refined, new_v_refined,\
             e_grid_clean, vf_clean, c_clean, a_prime_clean
@@ -880,7 +803,6 @@ def Operator_Factory(cp):
 
         for index_h_prime in range(len(asset_grid_HE)):
             for index_z in range(len(z_vals)):
-                # printprint(index_h_prime)
 
                 h_prime = asset_grid_HE[index_h_prime]
                 a_primes, e_grid_points = root_H_UPRIME_func(h_prime,
@@ -888,8 +810,6 @@ def Operator_Factory(cp):
                                                              Ud_prime_a[index_z, :],
                                                              Ud_prime_h[index_z, :], t)
                 
-                #(a_primes)
-
                 endog_grid_unrefined[index_z, index_h_prime, :] = e_grid_points
                 a_prime_unrefined[index_z, index_h_prime, :] = a_primes
 
@@ -926,9 +846,6 @@ def Operator_Factory(cp):
         new_v_refined = np.ones((len(z_vals), len(asset_grid_WE)))
         new_c_refined = np.ones((len(z_vals), len(asset_grid_WE)))
 
-        #print(endog_grid_unrefined)
-
-        # keep today's shock fixed
 
         for index_z in range(len(z_vals)):
             a_prime_unrefined_ur = np.ravel(a_prime_unrefined[index_z, :])
@@ -942,26 +859,10 @@ def Operator_Factory(cp):
             egrid_unref_points = np.ravel(endog_grid_unrefined[index_z, :])[
                 np.where(a_prime_unrefined_ur > 0)]
             
-            #uniqueIds = uniqueEG(egrid_unref_points, vf_unrefined_points)
-
-            #egrid_unref_points = egrid_unref_points[uniqueIds]
-            #vf_unrefined_points = vf_unrefined_points[uniqueIds]
-            #hprime_unrefined_points = hprime_unrefined_points[uniqueIds]
-            #aprime_unrefined_points = aprime_unrefined_points[uniqueIds]
 
             c_unrefined_points = egrid_unref_points - hprime_unrefined_points * (1 + tau) - aprime_unrefined_points
             
             gr_h  = du_c(c_unrefined_points) 
-
-
-            # print(egrid_unref_points)
-            #dela = np.zeros(len(aprime_unrefined_points))
-            #e_grid_cean, vf_clean, a_prime_clean, hprime_clean, dela\
-            #   = FUES(egrid_unref_points, vf_unrefined_points,
-            #           aprime_unrefined_points, hprime_unrefined_points,gr_h,dela,
-            #           b, m_bar=m_bar)
-
-            #e_grid_cean, vf_clean, a_prime_clean, hprime_clean, dela = FUES(egrid_unref_points, vf_unrefined_points, aprime_unrefined_points, hprime_unrefined_points,hprime_unrefined_points, b=1e-10, m_bar=m_bar, endog_mbar = False)
 
             # evaluate using RFC interpolation
             v_raw = np.array([vf_unrefined_points]).T
@@ -970,9 +871,7 @@ def Operator_Factory(cp):
             M_raw = np.array([egrid_unref_points]).T
             grid = np.array([asset_grid_WE]).T
 
-            #M_clean, v_clean, sigma_clean,M_intersect,_,sigma_intersect= Rfc_intersect_interp(M_raw,gr_raw,v_raw,sigma_raw,grid,1, 0.7, 2, [1],k = 5,k1=5, max_iter = 500, intersection = True,interp_intersect=True, s= 1,s_decay =1)
-
-            sub_points, tngv, closest_indices = rfc(M_raw,gr_raw,v_raw,sigma_raw, J_bar = 0.8, radius = 0.25, k =50)
+            sub_points, tngv, closest_indices = rfc(M_raw,gr_raw,v_raw,sigma_raw, J_bar = 0.8, radius = 0.05, k =50)
 
             mask = np.ones(M_raw.shape[0] ,dtype=bool)
             mask[sub_points] = False
@@ -989,12 +888,6 @@ def Operator_Factory(cp):
             a_prime_clean = a_prime_clean[sortindex]
             c_clean = c_clean[sortindex]
 
-            #e_grid_cean = M_clean[:,0]
-            #vf_clean = v_clean[:,0]
-            #a_prime_clean = sigma_clean[:,0]
-            #hprime_clean = sigma_clean[:,1]
-            #print(e_grid_cean)
-
             sigma_intersect = None
             M_intersect = None
             c_clean = e_grid_cean - hprime_clean * (1 + tau) - a_prime_clean
@@ -1007,8 +900,6 @@ def Operator_Factory(cp):
                 = interp_as(e_grid_cean, vf_clean, asset_grid_WE)
             new_c_refined[index_z, :]\
                 = interp_as(e_grid_cean, c_clean, asset_grid_WE)
-
-            #print( )
 
         return new_a_prime_refined, new_c_refined, new_h_prime_refined, new_v_refined,\
             e_grid_cean, vf_clean, hprime_clean, a_prime_clean,\

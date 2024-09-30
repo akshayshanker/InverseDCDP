@@ -26,7 +26,7 @@ def plot_pols(cp, Results1, Results2, plot_t, index):
 		fig_pol_a, ax_pol_a = pl.subplots(1, 2, figsize=(8, 6))
 		fig_pol_c, ax_pol_c = pl.subplots(1, 2, figsize=(8, 6))
 
-		for i_z in [1]:
+		for i_z in [0,1]:
 			for col_ih, i_h, lbs in zip([0, 1, 2], index, labs):
 
 				pos_col = np.where(
@@ -37,7 +37,7 @@ def plot_pols(cp, Results1, Results2, plot_t, index):
 				x1 = np.insert(cp.asset_grid_WE, pos_col, np.nan)
 
 				pos_bell = np.where(
-					np.abs(np.diff(Results2[plot_t]["Hadj"][i_z, :])) > 2)[0] + 1
+					np.abs(np.diff(Results2[plot_t]["Hadj"][i_z, :])) > 1e100)[0] + 1
 				g_2 = np.insert(
 					Results2[plot_t]["Hadj"][i_z, :], pos_bell, np.nan)
 				x2 = np.insert(cp.asset_grid_WE, pos_bell, np.nan)
@@ -82,6 +82,7 @@ def plot_pols(cp, Results1, Results2, plot_t, index):
 				ax_pol[1].yaxis.set_major_formatter(FormatStrFormatter("%.1f"))
 				ax_pol[1].xaxis.set_major_formatter(FormatStrFormatter("%.0f"))
 				ax_pol[1].grid(True)
+				ax_pol[0].grid(True)
 
 				pos_col_a = np.where(
 					np.abs(np.diff(Results1[plot_t]["Aadj"][i_z, :])) > 0.08)[0] + 1
@@ -108,9 +109,9 @@ def plot_pols(cp, Results1, Results2, plot_t, index):
 					FormatStrFormatter("%.1f"))
 				ax_pol_a[0].xaxis.set_major_formatter(
 					FormatStrFormatter("%.0f"))
-				ax_pol_a[1].set_xlabel(r'Start of time $t$ financial assets', fontsize=11)
+				ax_pol_a[1].set_xlabel(r'Time $t$ total resources', fontsize=11)
 				ax_pol_a[1].set_ylabel(r'End of time $t$ financial assets', fontsize=11)
-				ax_pol_a[0].set_xlabel(r'Start of time $t$ financial assets', fontsize=11)
+				ax_pol_a[0].set_xlabel(r'Time $t$ total resources', fontsize=11)
 				ax_pol_a[0].set_ylabel(r'End of time $t$ financial assets', fontsize=11)
 				ax_pol_a[1].spines['right'].set_visible(False)
 				ax_pol_a[1].spines['top'].set_visible(False)
@@ -123,14 +124,16 @@ def plot_pols(cp, Results1, Results2, plot_t, index):
 				ax_pol_a[1].xaxis.set_major_formatter(
 					FormatStrFormatter("%.0f"))
 				ax_pol_a[1].grid(True)
+				ax_pol_a[0].grid(True)
+				#]
 
 				ax_val[0].set_yticklabels(ax_val[0].get_yticks(), size=9)
 				ax_val[0].set_xticklabels(ax_val[0].get_xticks(), size=9)
 				ax_val[0].yaxis.set_major_formatter(FormatStrFormatter("%.1f"))
 				ax_val[0].xaxis.set_major_formatter(FormatStrFormatter("%.0f"))
-				ax_val[1].set_xlabel(r'Start of time $t$ financial assets', fontsize=11)
+				ax_val[1].set_xlabel(r'Time $t$ total resources', fontsize=11)
 				ax_val[1].set_ylabel('Value', fontsize=11)
-				ax_val[0].set_xlabel(r'Start of time $t$ financial assets', fontsize=11)
+				ax_val[0].set_xlabel(r'Time $t$ total resources', fontsize=11)
 				ax_val[0].set_ylabel('Value', fontsize=11)
 				ax_val[1].spines['right'].set_visible(False)
 				ax_val[1].spines['top'].set_visible(False)
@@ -274,7 +277,7 @@ def plot_grids(adj_ur_grids,cp, term_t = 58):
 
 		#ax[0].set_ylim(1.68, 1.72)
 		ax[0].set_xlim(30, 40)
-		# ax[0].set_ylim(11.68,11.79)
+		ax[0].set_ylim(2.75,2.9)
 		# ax[0].set_xlim(48,56)
 		ax[0].set_xlabel(r'Time $t$ total resources', fontsize=11)
 		ax[0].set_ylabel('Value', fontsize=11)

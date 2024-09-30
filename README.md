@@ -1,6 +1,6 @@
 # Using Inverse Euler Equations to Solve Multidimensional Discrete-Continuous Dynamic Models: A General Method
 
-This repository contains the code for the paper *Using Inverse Euler Equations to Solve Multidimensional Discrete-Continuous Dynamic Models: A General Method* by Isabella Dobrescu and Akshay Shanker.
+This repository contains code related to the paper *Using Inverse Euler Equations to Solve Multidimensional Discrete-Continuous Dynamic Models: A General Method* by Isabella Dobrescu and Akshay Shanker.
 
 ## Contents
 
@@ -82,12 +82,12 @@ python3 housing_plot.py
 
 |                             | RFC + Euler Inverse     | NEGM   |
 |-----------------------------|--------|--------|
-| **Avg. time (sec.) per iter.**| 5.06 | 7.59 |
+| **Avg. time (sec.) per iter.**| 19.03 | 28.12 |
 | **Euler errors**            |        |        |
-| **All (average)**  | -2.088 | -1.49|
-| **5th percentile** | -5.958 | -3.427 |
-| **95th percentile** | -0.493 | -0.402 |
-| **Median** | -0.991 | -0.995 |
+| **All (average)**  | -2.253 | 0.640 |
+| **5th percentile**  | -6.601 | -3.751 |
+| **95th percentile** | -0.490 | -0.442 |
+| **Median** | -0.983 | -1.008 |
 
 
 
