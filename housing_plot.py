@@ -306,7 +306,7 @@ if __name__ == "__main__":
 						 K=1.3,
 						 tol_bel=1e-09,
 						 m_bar=1.0001,
-						 theta=np.exp(0.3), t0 =57, root_eps=1e-1, stat= False)
+						 theta=np.exp(0.3), t0 =50, root_eps=1e-1, stat= False)
 	
 	# 0. Solve with Bellman 
 	#iterVFI, iterEGM, condition_V, NEGM = Operator_Factory(cp)
