@@ -1,3 +1,34 @@
+
+"""
+Druedhal and Jorgensen (2017) pension savings model modified to include RFC. 
+
+
+1. Optimal constraint choice from the exogenous grid. 
+Recall the inversion functions are: 
+
+- invert_ucon: Invert unconstrained region
+- invert_dcon: Invert d constrained region
+- invert_acon: Invert a asset constrained region
+- invert_con: Invert fully constrained region
+
+Each inversion function is modified to eliminate points that do not satisfy 
+the complementary slackness conditions as per Theorem 2 in Dobrescu and Shanker (2024).
+
+To account for the case when p_L < \infty, the following region is added:
+- conBar: Invert fully constrained region with y_p (d) = p_L and a = 0.
+
+The region where y_p = p_L and a> 0 is accounted for by points in ucon.
+
+2. Implementation of RFC. 
+
+The RFC is implemented in the function rfc_upper_envelope_inplace over 
+a combined set of points from the inversion functions that satisfy the
+complementary slackness conditions and Euler equation inverse. 
+
+
+"""
+
+
 import numpy as np
 from numba import njit
 import os
@@ -247,9 +278,9 @@ def invert_ucon(w,wa,wb,par):
     c = utility.inv_marg_func(wa,par)
     d = (par.chi*wb)/(wa-wb)-1
     a = par.grid_a_pd_nd
-    #b = cp.copy(par.grid_b_pd_nd)
     a_prime  = np.copy(par.grid_a_pd_nd)
     LL = 0
+    
     for i in range(c.shape[0]):
         for j in range(c.shape[1]):
             if d[i,j] >= par.p_L:
@@ -271,7 +302,7 @@ def invert_ucon(w,wa,wb,par):
     gr_m_now = utility.marg_func(c,par)
 
 
-    # complementarity slackness
+    # Eliminate points that do not satisfy complementary slackness
     for i in range(n.shape[0]):
         for j in range(n.shape[1]):
             if d[i,j] < 0:
@@ -308,7 +339,7 @@ def invert_dcon(w,wa,wb,par):
     gr_n_now = wb
     gr_m_now = utility.marg_func(c,par)
 
-    # complementarity slackness
+    # Eliminate points that do not satisfy the complementary slackness
     for i in range(n.shape[0]):
         for j in range(n.shape[1]):
             mu_p =  gr_m_now[i,j] - wb[i,j]*(1+par.chi) 
@@ -347,7 +378,7 @@ def invert_dconBar(w,wa,wb,par):
     wb_acon = np.zeros(m.shape)
     gr_n_now = wb
 
-    # complementary slackness
+    # Eliminate points that do not satisfy complementary slackness
     for i in range(n.shape[0]):
     
          for j in range(n.shape[1]):
@@ -414,7 +445,7 @@ def invert_acon(w,wa,wb,par):
     gr_n_now = wb_acon
     gr_m_now = utility.marg_func(c,par)
 
-    # complementary slackness
+    # Eliminate points that do not satisfy complementary slackness
     for i in range(n.shape[0]):       
        for j in range(n.shape[1]):
             mu_f = gr_m_now[i,j] - wa_acon[i,j]
@@ -461,7 +492,7 @@ def invert_con(w,wa,wb,par):
     n = np.copy(par.grid_n_nd)
     m = np.copy(par.grid_m_nd)
 
-    # complementary slackness
+    # Eliminate points that do not satisfy complementary slackness
     for i in range(n.shape[0]):
         for j in range(n.shape[1]):
             mu_a = gr_m_now[i,j] - wa_con[i,j]
@@ -484,7 +515,7 @@ def invert_conBar(w,wa,wb,par):
 
     Constrained region defined by:
 
-    mu_f >= 0, mu_pBar>=0, y_f=0, y_p=m_p 
+    mu_f >= 0, mu_pBar>=0, y_f=0, y_p=p_L
     
     """
                         
@@ -514,7 +545,7 @@ def invert_conBar(w,wa,wb,par):
     n = np.copy(par.grid_n_nd)
     m = np.copy(par.grid_m_nd)
 
-    # complementary slackness
+    # Eliminate points that do not satisfy complementary slackness
     for i in range(n.shape[0]):
         for j in range(n.shape[1]):
             m[i,j] = np.nan
