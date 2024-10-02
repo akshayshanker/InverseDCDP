@@ -33,7 +33,7 @@ Performance comparison with four constraint regions, as in Dreudhal and Jorgense
 - **RFC+ Delaunay**: Our RFC implemented with SciPy's [Delaunay triangulation](https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.Delaunay.html) and [LinearNDInterpolator](https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.LinearNDInterpolator.html).
 - **G2EGM**: Upper-envelope algorithm using the [Druedhal and Jorgensen (2017)](https://www.sciencedirect.com/science/article/abs/pii/S0165188916301920) approach.
 
-The RFC implementation also removes points that do not satisfy complementary slackness conditions on the exogenous grid **before doing the RFC** , eliminating the need for an additional upper-envelope step to recover the optimal the constrained regions. 
+The RFC implementation also removes points that do not satisfy complementary slackness conditions on the exogenous grid **before doing the RFC**, eliminating the need for an additional upper-envelope step to recover the optimal the constrained regions. 
 
 
 |                   | RFC+ Delaunay | G2EGM      |
