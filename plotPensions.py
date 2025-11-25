@@ -19,6 +19,7 @@ was modified to:
 
 import numpy as np
 import dill as pickle
+import os
 from G2EGM.G2EGMModel import G2EGMModelClass
 from G2EGM.figs import euler_hist, Kregions, decision_functions, segments
 from timingPensions import timing
@@ -44,7 +45,8 @@ if __name__ == '__main__':
     p_L = 2  # Upper bound for pension contributions
     
     # File paths for saving plots and data
-    scrpath = '/scratch/tp66/dcdp/data/' # drive where raw egmgrids are saved 
+    scrpath = os.path.join(os.path.dirname(__file__), 'data')
+    os.makedirs(scrpath, exist_ok=True)
     plotpath = 'plots/pensions/' 
 
     # Initialize and configure the RFC model
@@ -68,7 +70,8 @@ if __name__ == '__main__':
             't_save': segplot_t, 
             'do_print': do_print,
             'p_L': p_L,
-            'save_data': False
+            'save_data': True,
+            'scrpath': scrpath,
         }
     )
     
@@ -87,6 +90,7 @@ if __name__ == '__main__':
             'do_print': do_print,
             'Nm': Nm,
             'p_L': p_L,
+            'scrpath': scrpath,
         }
     )
     
@@ -96,9 +100,9 @@ if __name__ == '__main__':
     #segments(model_G2EGM, 3,'testG2E')
 
     # Load endogenous grid data
-    egrids_intersect = pickle.load(open(f"{scrpath}e_grids_intersect.pkl", "rb"))
-    egrids_clean = pickle.load(open(f"{scrpath}/e_grids_clean.pkl", "rb"))
-    egrids_raw = pickle.load(open(f"{scrpath}/e_grid_raw.pkl", "rb"))
+    egrids_intersect = pickle.load(open(os.path.join(scrpath, "e_grids_intersect.pkl"), "rb"))
+    egrids_clean = pickle.load(open(os.path.join(scrpath, "e_grids_clean.pkl"), "rb"))
+    egrids_raw = pickle.load(open(os.path.join(scrpath, "e_grid_raw.pkl"), "rb"))
 
     # Create a histogram of the Euler errors
     #smodelDict = {'RFC': model_RFC, 'G2EGM': model_G2EGM}
@@ -161,5 +165,4 @@ if __name__ == '__main__':
 
     with open(f'tabs_euler_errors{postfix}.md', 'w') as txtfile:
         txtfile.writelines(lines)
-
 
