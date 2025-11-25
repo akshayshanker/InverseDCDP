@@ -1,11 +1,14 @@
 import seaborn as sns
 import matplotlib.pylab as pl
 from matplotlib.ticker import FormatStrFormatter
+from pathlib import Path
 import numpy as np
 
 def plot_pols(cp, Results1, Results2, plot_t, index):
 
 		pl.close()
+		plots_dir = Path("plots/housing")
+		plots_dir.mkdir(parents=True, exist_ok=True)
 		sns.set(
 			style="white", rc={
 				"font.size": 11, "axes.titlesize": 11, "axes.labelsize": 11})
@@ -65,8 +68,7 @@ def plot_pols(cp, Results1, Results2, plot_t, index):
 				ax_val[0].spines['right'].set_visible(False)
 				ax_val[0].spines['top'].set_visible(False)
 				ax_val[0].grid(True)
-				ax_pol[0].set_yticklabels(ax_pol[0].get_yticks(), size=9)
-				ax_pol[0].set_xticklabels(ax_pol[0].get_xticks(), size=9)
+				ax_pol[0].tick_params(axis='both', labelsize=9)
 				ax_pol[0].yaxis.set_major_formatter(FormatStrFormatter("%.1f"))
 				ax_pol[0].xaxis.set_major_formatter(FormatStrFormatter("%.0f"))
 				ax_pol[1].set_xlabel(r'Start of time $t$ financial assets', fontsize=11)
@@ -77,8 +79,7 @@ def plot_pols(cp, Results1, Results2, plot_t, index):
 				ax_pol[1].spines['top'].set_visible(False)
 				ax_pol[0].spines['right'].set_visible(False)
 				ax_pol[0].spines['top'].set_visible(False)
-				ax_pol[1].set_yticklabels(ax_pol[0].get_yticks(), size=9)
-				ax_pol[1].set_xticklabels(ax_pol[0].get_xticks(), size=9)
+				ax_pol[1].tick_params(axis='both', labelsize=9)
 				ax_pol[1].yaxis.set_major_formatter(FormatStrFormatter("%.1f"))
 				ax_pol[1].xaxis.set_major_formatter(FormatStrFormatter("%.0f"))
 				ax_pol[1].grid(True)
@@ -103,8 +104,7 @@ def plot_pols(cp, Results1, Results2, plot_t, index):
 								 label=lbs,
 								 linewidth=0.75)
 
-				ax_pol_a[0].set_yticklabels(ax_pol[0].get_yticks(), size=9)
-				ax_pol_a[0].set_xticklabels(ax_pol[0].get_xticks(), size=9)
+				ax_pol_a[0].tick_params(axis='both', labelsize=9)
 				ax_pol_a[0].yaxis.set_major_formatter(
 					FormatStrFormatter("%.1f"))
 				ax_pol_a[0].xaxis.set_major_formatter(
@@ -117,8 +117,7 @@ def plot_pols(cp, Results1, Results2, plot_t, index):
 				ax_pol_a[1].spines['top'].set_visible(False)
 				ax_pol_a[0].spines['right'].set_visible(False)
 				ax_pol_a[0].spines['top'].set_visible(False)
-				ax_pol_a[1].set_yticklabels(ax_pol[0].get_yticks(), size=9)
-				ax_pol_a[1].set_xticklabels(ax_pol[0].get_xticks(), size=9)
+				ax_pol_a[1].tick_params(axis='both', labelsize=9)
 				ax_pol_a[1].yaxis.set_major_formatter(
 					FormatStrFormatter("%.1f"))
 				ax_pol_a[1].xaxis.set_major_formatter(
@@ -127,8 +126,7 @@ def plot_pols(cp, Results1, Results2, plot_t, index):
 				ax_pol_a[0].grid(True)
 				#]
 
-				ax_val[0].set_yticklabels(ax_val[0].get_yticks(), size=9)
-				ax_val[0].set_xticklabels(ax_val[0].get_xticks(), size=9)
+				ax_val[0].tick_params(axis='both', labelsize=9)
 				ax_val[0].yaxis.set_major_formatter(FormatStrFormatter("%.1f"))
 				ax_val[0].xaxis.set_major_formatter(FormatStrFormatter("%.0f"))
 				ax_val[1].set_xlabel(r'Time $t$ total resources', fontsize=11)
@@ -139,12 +137,11 @@ def plot_pols(cp, Results1, Results2, plot_t, index):
 				ax_val[1].spines['top'].set_visible(False)
 				ax_val[0].spines['right'].set_visible(False)
 				ax_val[0].spines['top'].set_visible(False)
-				ax_val[1].set_yticklabels(ax_val[0].get_yticks(), size=9)
-				ax_val[1].set_xticklabels(ax_val[0].get_xticks(), size=9)
+				ax_val[1].tick_params(axis='both', labelsize=9)
 				ax_val[1].yaxis.set_major_formatter(FormatStrFormatter("%.1f"))
 				ax_val[1].xaxis.set_major_formatter(FormatStrFormatter("%.0f"))
 
-				ax_val[0].legend(frameon=False, prop={'size': 10})
+				ax_val[1].legend(frameon=False, prop={'size': 10})
 				ax_pol[0].legend(frameon=False, prop={'size': 10})
 
 				ax_val[0].set_title(Results1['label'], fontsize=11)
@@ -164,9 +161,9 @@ def plot_pols(cp, Results1, Results2, plot_t, index):
 			fig_pol.tight_layout()
 			fig_val.tight_layout()
 
-		fig_pol.savefig('plots/housing/policy_adj_housing_{}.png'.format(plot_t))
-		fig_val.savefig('plots/housing/value_housing_{}.png'.format(plot_t))
-		fig_pol_a.savefig('plots/housing/policy_adj_assets_{}.png'.format(plot_t))
+		fig_pol.savefig(plots_dir / f'policy_adj_housing_{plot_t}.png')
+		fig_val.savefig(plots_dir / f'value_housing_{plot_t}.png')
+		fig_pol_a.savefig(plots_dir / f'policy_adj_assets_{plot_t}.png')
 
 		pl.close()
 
@@ -175,6 +172,8 @@ def plot_pols(cp, Results1, Results2, plot_t, index):
 def plot_grids(adj_ur_grids,cp, term_t = 58):
 
 	for j in list(range(term_t, cp.T)):
+		plots_dir = Path("plots/housing")
+		plots_dir.mkdir(parents=True, exist_ok=True)
 
 		# Test Scan Plots
   
@@ -244,7 +243,7 @@ def plot_grids(adj_ur_grids,cp, term_t = 58):
 		ax[1, 1].plot(e_grid_cean, hprime_clean, color=colors[0],
 					  linewidth=0.75)
 
-		fig.savefig('plots/housing/scan_test_{}.png'.format(plot_t))
+		fig.savefig(plots_dir / f'scan_test_{plot_t}.png')
 
 		# FUES-EGM Plots for paper
 
@@ -334,8 +333,7 @@ def plot_grids(adj_ur_grids,cp, term_t = 58):
 		# ax[1].xaxis.set_major_formatter(FormatStrFormatter("%.0f"))
 		fig.tight_layout()
 		ax[1].legend(frameon=True, prop={'size': 10})
-		fig.savefig(
-			'plots/housing/hous_vf_aprime_all_small_{}.png'.format(plot_t))
+		fig.savefig(plots_dir / f'hous_vf_aprime_all_small_{plot_t}.png')
 
 		# Plot all EGM points
 		pl.close()
@@ -419,4 +417,4 @@ def plot_grids(adj_ur_grids,cp, term_t = 58):
 		fig.tight_layout()
 		ax[1].legend(frameon=False, prop={'size': 10})
 		"""
-		fig.savefig('plots/housing/hous_vf_aprime_all_big_{}.png'.format(plot_t))
+		fig.savefig(plots_dir / f'hous_vf_aprime_all_big_{plot_t}.png')
